@@ -1,6 +1,16 @@
-const app = require('./app'); // Corregido: ahora busca app.js en la misma carpeta
+require('dotenv').config({ path: __dirname + '/../.env' });
+
+const connectDB = require("./config/db");
+const app = require("./app");
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Servidor corriendo en puerto ${PORT}`);
-});
+
+connectDB()
+  .then(() => {
+    console.log("✅ MongoDB conectado");
+    app.listen(PORT, () => console.log(`Servidor en puerto ${PORT}`));
+  })
+  .catch((err) => {
+    console.error("❌ Error al conectar a MongoDB:", err);
+    process.exit(1);
+  });
