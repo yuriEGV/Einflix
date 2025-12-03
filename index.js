@@ -1,17 +1,11 @@
 import dotenv from 'dotenv';
-dotenv.config(); // Debe ir primero
+dotenv.config();
 
 import connectDB from './config/db.js';
 import app from './app.js';
 
-const PORT = process.env.PORT || 3000;
+// Conectar a MongoDB SOLO cuando la función serverless se ejecute
+await connectDB();
 
-connectDB()
-  .then(() => {
-    console.log("✅ MongoDB conectado");
-    app.listen(PORT, () => console.log(`🚀 Servidor levantado en el puerto ${PORT}`));
-  })
-  .catch((err) => {
-    console.error("❌ Error al conectar a MongoDB:", err);
-    process.exit(1);
-  });
+// Exportar la app para Vercel
+export default app;
