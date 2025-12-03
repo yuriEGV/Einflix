@@ -1,9 +1,8 @@
-const express = require('express');
+import express from 'express';
+import { getRecommendations } from '../controllers/recommendationController.js';
+import { verifyToken } from '../middlewares/authMiddleware.js';
 const router = express.Router();
-const recommendationController = require('../controllers/recommendationController');
-const authMiddleware = require('../middlewares/authMiddleware');
 
-// Recommendation routes
-router.get('/', authMiddleware, recommendationController.getRecommendations);
+router.get('/', verifyToken, getRecommendations);
 
-module.exports = router;
+export default router;

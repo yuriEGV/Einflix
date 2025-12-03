@@ -1,11 +1,8 @@
-const express = require('express');
+import express from 'express';
+import { saveEvent, getAnalytics } from '../controllers/analyticsController.js';
 const router = express.Router();
-const analyticsController = require('../controllers/analyticsController');
 
-// Route to save analytics events
-router.post('/events', analyticsController.saveEvent);
+router.post('/events', saveEvent);
+router.get('/dashboard', getAnalytics);
 
-// Route to get analytics data for admin dashboard
-router.get('/dashboard', analyticsController.getAnalytics);
-
-module.exports = router;
+export default router;

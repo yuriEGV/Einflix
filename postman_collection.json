@@ -1,133 +1,94 @@
 {
   "info": {
-    "name": "Einflix API",
+    "name": "Einflix API – Dataset y pruebas automáticas",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
     {
-      "name": "Auth",
-      "item": [
-        {
-          "name": "Signup",
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "url": { "raw": "{{baseUrl}}/auth/signup", "host": ["{{baseUrl}}"], "path": ["auth", "signup"] },
-            "body": { "mode": "raw", "raw": "{\"username\":\"testuser\",\"email\":\"test@example.com\",\"password\":\"password123\"}" }
-          }
+      "name": "Registro de usuario (fuerza collección users)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/users/register",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "users", "register"]
         },
-        {
-          "name": "Login",
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] },
-            "body": { "mode": "raw", "raw": "{\"email\":\"test@example.com\",\"password\":\"password123\"}" }
-          }
-        },
-        {
-          "name": "Refresh Token",
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "url": { "raw": "{{baseUrl}}/auth/refresh", "host": ["{{baseUrl}}"], "path": ["auth", "refresh"] },
-            "body": { "mode": "raw", "raw": "{\"refreshToken\":\"sample-refresh-token\"}" }
-          }
+        "body": {
+          "mode": "raw",
+          "raw": "{\"username\":\"prueba\",\"email\":\"prueba@einflix.com\",\"password\":\"testeinflix123\"}"
         }
-      ]
+      }
     },
     {
-      "name": "Profiles",
-      "item": [
-        {
-          "name": "Get Profiles",
-          "request": {
-            "method": "GET",
-            "url": { "raw": "{{baseUrl}}/profiles", "host": ["{{baseUrl}}"], "path": ["profiles"] }
-          }
+      "name": "Login de usuario",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/users/login",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "users", "login"]
         },
-        {
-          "name": "Create Profile",
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "url": { "raw": "{{baseUrl}}/profiles", "host": ["{{baseUrl}}"], "path": ["profiles"] },
-            "body": { "mode": "raw", "raw": "{\"name\":\"New Profile\"}" }
-          }
+        "body": {
+          "mode": "raw",
+          "raw": "{\"email\":\"prueba@einflix.com\",\"password\":\"testeinflix123\"}"
         }
-      ]
+      }
     },
     {
-      "name": "Media",
-      "item": [
-        {
-          "name": "List Media",
-          "request": {
-            "method": "GET",
-            "url": { "raw": "{{baseUrl}}/media", "host": ["{{baseUrl}}"], "path": ["media"] }
-          }
+      "name": "Crear media de prueba (fuerza colección media)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/media",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "media"]
         },
-        {
-          "name": "Media Detail",
-          "request": {
-            "method": "GET",
-            "url": { "raw": "{{baseUrl}}/media/:id", "host": ["{{baseUrl}}"], "path": ["media", ":id"] }
-          }
-        },
-        {
-          "name": "Upload Media",
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "url": { "raw": "{{baseUrl}}/admin/media", "host": ["{{baseUrl}}"], "path": ["admin", "media"] },
-            "body": { "mode": "raw", "raw": "{\"title\":\"Sample Media\",\"type\":\"video\"}" }
-          }
-        },
-        {
-          "name": "Register View",
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "url": { "raw": "{{baseUrl}}/media/:id/view", "host": ["{{baseUrl}}"], "path": ["media", ":id", "view"] },
-            "body": { "mode": "raw", "raw": "{\"position\":120}" }
-          }
+        "body": {
+          "mode": "raw",
+          "raw": "{\"title\":\"Demo video\",\"type\":\"video\",\"description\":\"Un video de test\",\"url\":\"https://einflix.com/media/demo.mp4\"}"
         }
-      ]
+      }
     },
     {
-      "name": "Recommendations",
-      "item": [
-        {
-          "name": "Get Recommendations",
-          "request": {
-            "method": "GET",
-            "url": { "raw": "{{baseUrl}}/recommendations", "host": ["{{baseUrl}}"], "path": ["recommendations"] }
-          }
+      "name": "Crear transacción de pago Webpay (fuerza colección pagos)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/payments/iniciar",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "payments", "iniciar"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"buy_order\":\"TESTORDER-123\",\"session_id\":\"SESION-1\",\"amount\":1000,\"return_url\":\"https://einflix.com/webpay-retorno\"}"
         }
-      ]
+      }
     },
     {
-      "name": "Payments",
-      "item": [
-        {
-          "name": "Create Payment",
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "url": { "raw": "{{baseUrl}}/payments/create", "host": ["{{baseUrl}}"], "path": ["payments", "create"] },
-            "body": { "mode": "raw", "raw": "{\"amount\":1000}" }
-          }
-        },
-        {
-          "name": "Payment Webhook",
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "url": { "raw": "{{baseUrl}}/webhooks/payments", "host": ["{{baseUrl}}"], "path": ["webhooks", "payments"] },
-            "body": { "mode": "raw", "raw": "{\"status\":\"success\"}" }
-          }
+      "name": "Hacer un streaming de video (fuerza prueba de video streaming)",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Range", "value": "bytes=0-" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/stream/demo.mp4",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "stream", "demo.mp4"]
         }
-      ]
+      }
     }
   ]
 }

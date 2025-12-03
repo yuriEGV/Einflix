@@ -1,7 +1,7 @@
-const Media = require('../models/mediaModel');
+import Media from '../models/mediaModel.js';
 
 // Get all media
-exports.getAllMedia = async (req, res) => {
+export async function getAllMedia(req, res) {
   try {
     const media = await Media.find();
     res.status(200).json(media);
@@ -11,7 +11,7 @@ exports.getAllMedia = async (req, res) => {
 };
 
 // Get media by ID
-exports.getMediaById = async (req, res) => {
+export async function getMediaById(req, res) {
   try {
     const media = await Media.findById(req.params.id);
     if (!media) return res.status(404).json({ error: 'Media not found' });
@@ -22,7 +22,7 @@ exports.getMediaById = async (req, res) => {
 };
 
 // Create new media
-exports.createMedia = async (req, res) => {
+export async function createMedia(req, res) {
   try {
     const newMedia = new Media(req.body);
     await newMedia.save();

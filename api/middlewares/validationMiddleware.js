@@ -1,7 +1,7 @@
-const Joi = require('joi');
+import Joi from 'joi';
 
 // Example validation middleware
-const validateRequest = (schema) => {
+export const validateRequest = (schema) => {
   return (req, res, next) => {
     const { error } = schema.validate(req.body);
     if (error) {
@@ -10,5 +10,3 @@ const validateRequest = (schema) => {
     next();
   };
 };
-
-module.exports = validateRequest;

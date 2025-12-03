@@ -1,8 +1,7 @@
-const express = require('express');
+import express from 'express';
+import { uploadMedia, handleUpload } from '../controllers/uploadController.js';
 const router = express.Router();
-const uploadController = require('../controllers/uploadController');
 
-// Upload route
-router.post('/', uploadController.uploadMedia, uploadController.handleUpload);
+router.post('/', uploadMedia, handleUpload);
 
-module.exports = router;
+export default router;

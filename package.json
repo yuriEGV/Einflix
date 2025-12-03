@@ -11,7 +11,9 @@
   "author": "",
   "license": "ISC",
   "description": "",
+  "type": "module",
   "dependencies": {
+    "all": "^0.0.0",
     "axios": "^1.13.2",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.5",

@@ -1,7 +1,6 @@
-const AnalyticsEvent = require('../models/analyticsEventModel');
+import AnalyticsEvent from '../models/analyticsEventModel.js';
 
-// Save analytics event
-exports.saveEvent = async (req, res) => {
+export async function saveEvent(req, res) {
   try {
     const { userId, mediaId, eventType, percentageWatched, sessionTime } = req.body;
     const newEvent = new AnalyticsEvent({ userId, mediaId, eventType, percentageWatched, sessionTime });
@@ -10,10 +9,9 @@ exports.saveEvent = async (req, res) => {
   } catch (error) {
     res.status(500).json({ error: 'Error saving event' });
   }
-};
+}
 
-// Get analytics data for admin dashboard
-exports.getAnalytics = async (req, res) => {
+export async function getAnalytics(req, res) {
   try {
     const topMedia = await AnalyticsEvent.aggregate([
       { $group: { _id: '$mediaId', count: { $sum: 1 } } },
@@ -40,4 +38,4 @@ exports.getAnalytics = async (req, res) => {
   } catch (error) {
     res.status(500).json({ error: 'Error fetching analytics' });
   }
-};
+}

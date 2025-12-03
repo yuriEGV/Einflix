@@ -1,8 +1,8 @@
-const Media = require('../models/mediaModel');
-const User = require('../models/userModel');
+import Media from '../models/mediaModel.js';
+import User from '../models/userModel.js';
 
 // Get recommendations for a user
-exports.getRecommendations = async (req, res) => {
+export async function getRecommendations(req, res) {
   try {
     const userId = req.user.id; // Assuming user ID is available in the request
 
@@ -13,4 +13,4 @@ exports.getRecommendations = async (req, res) => {
   } catch (error) {
     res.status(500).json({ error: 'Error fetching recommendations' });
   }
-};
+}
