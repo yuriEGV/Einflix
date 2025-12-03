@@ -1,4 +1,4 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
 
 // Auth Endpoints
@@ -54,4 +54,4 @@ router.post('/webhooks/payments', (req, res) => {
   res.status(200).json({ message: 'Webhook received' });
 });
 
-module.exports = router;
+export default router;

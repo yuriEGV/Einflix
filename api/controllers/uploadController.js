@@ -1,5 +1,5 @@
-const multer = require('multer');
-const path = require('path');
+import multer from 'multer';
+import path from 'path';
 
 // Configure storage for uploaded files
 const storage = multer.diskStorage({
@@ -25,10 +25,10 @@ const upload = multer({
 });
 
 // Upload handler
-exports.uploadMedia = upload.single('media');
+export const uploadMedia = upload.single('media');
 
 // Example route handler
-exports.handleUpload = (req, res) => {
+export const handleUpload = (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: 'No file uploaded' });
   }

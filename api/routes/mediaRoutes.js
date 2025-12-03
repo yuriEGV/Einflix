@@ -1,10 +1,9 @@
-const express = require('express');
+import express from 'express';
+import { getAllMedia, getMediaById, createMedia } from '../controllers/mediaController.js';
 const router = express.Router();
-const mediaController = require('../controllers/mediaController');
 
-// Media routes
-router.get('/', mediaController.getAllMedia);
-router.get('/:id', mediaController.getMediaById);
-router.post('/', mediaController.createMedia);
+router.get('/', getAllMedia);
+router.get('/:id', getMediaById);
+router.post('/', createMedia);
 
-module.exports = router;
+export default router;

@@ -1,5 +1,5 @@
-const multer = require('multer');
-const path = require('path');
+import multer from 'multer';
+import path from 'path';
 
 // Configure storage for video uploads
 const storage = multer.diskStorage({
@@ -25,10 +25,10 @@ const upload = multer({
 });
 
 // Middleware for handling video uploads
-exports.uploadVideo = upload.single('video');
+export const uploadVideo = upload.single('video');
 
 // Controller for handling video upload response
-exports.handleVideoUpload = (req, res) => {
+export const handleVideoUpload = (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: 'No video file uploaded' });
   }
