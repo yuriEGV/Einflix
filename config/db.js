@@ -1,34 +1,17 @@
-// config/db.js
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
-if (!global.mongoose) {
-  global.mongoose = { conn: null, promise: null };
-}
+const connectDB = async () => {
+  if (mongoose.connection.readyState >= 1) return;
 
-async function connectDB() {
-  const mongoUri = process.env.MONGO_URI || process.env.MONGODB_URI;
-
-  if (!mongoUri) {
-    console.error("❌ No se encontró MONGO_URI en el entorno");
-    process.exit(1);
-  }
-
-  if (global.mongoose.conn) return global.mongoose.conn;
-
-  if (!global.mongoose.promise) {
-    mongoose.set('strictQuery', true);
-
-    global.mongoose.promise = mongoose.connect(mongoUri, {
-      maxPoolSize: 10,
-      bufferCommands: false,
-    }).then((m) => {
-      console.log("✅ Conectado a MongoDB");
-      return m;
+  try {
+    await mongoose.connect(process.env.MONGO_URI, {
+      dbName: process.env.DB_NAME || "einflix"
     });
-  }
 
-  global.mongoose.conn = await global.mongoose.promise;
-  return global.mongoose.conn;
-}
+    console.log("MongoDB conectado 🚀");
+  } catch (err) {
+    console.error("Error conectando a MongoDB:", err);
+  }
+};
 
 export default connectDB;
