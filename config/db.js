@@ -1,16 +1,18 @@
+// config/db.js
 import mongoose from "mongoose";
 
 const connectDB = async () => {
-  if (mongoose.connection.readyState >= 1) return;
-
   try {
-    await mongoose.connect(process.env.MONGO_URI, {
-      dbName: process.env.DB_NAME || "einflix"
-    });
+    const uri = process.env.MONGO_URI;
 
-    console.log("MongoDB conectado 🚀");
-  } catch (err) {
-    console.error("Error conectando a MongoDB:", err);
+    if (!uri) {
+      throw new Error("MONGO_URI no está definida en process.env");
+    }
+
+    await mongoose.connect(uri);
+    console.log("MongoDB conectado correctamente");
+  } catch (error) {
+    console.error("Error conectando a MongoDB:", error);
   }
 };
 
