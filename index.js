@@ -4,8 +4,15 @@ dotenv.config();
 import connectDB from './config/db.js';
 import app from './app.js';
 
-// Conectar a MongoDB SOLO cuando la función serverless se ejecute
-await connectDB();
+// Necesario para evitar múltiples conexiones en Vercel
+let isConnected = false;
 
-// Exportar la app para Vercel
-export default app;
+export default async function handler(req, res) {
+  if (!isConnected) {
+    await connectDB();
+    isConnected = true;
+    console.log("MongoDB conectado en Vercel");
+  }
+
+  return app(req, res);
+}

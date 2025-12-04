@@ -1,4 +1,4 @@
-import express from 'express';
+/*import express from 'express';
 import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -30,4 +30,34 @@ app.use('/api/payments', paymentRoutes);
 app.use('/api/stream', streamRoutes);
 app.use('/api/users', userRoutes);                    // ⬅️ AGREGADO
 
+export default app;
+*/
+
+import express from 'express';
+import cors from 'cors';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+// necesitamos __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Crear app
+const app = express();
+
+// Middlewares
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Static
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Importar rutas
+import routes from './api/routes/index.js';
+
+
+app.use('/api', routes);
+
+// exportar express
 export default app;
