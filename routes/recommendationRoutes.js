@@ -8,3 +8,4 @@ router.get('/', verifyToken, getRecommendations);
 export default router;
 
 
+

@@ -9,6 +9,7 @@ import analyticsRoutes from './analyticsRoutes.js';
 import adminRoutes from './adminRoutes.js';
 import uploadRoutes from './uploadRoutes.js';
 import recommendationRoutes from './recommendationRoutes.js';
+import driveRoutes from './driveRoutes.js';
 
 const router = Router();
 
@@ -21,6 +22,7 @@ router.use('/analytics', analyticsRoutes);
 router.use('/admin', adminRoutes);
 router.use('/uploads', uploadRoutes);
 router.use('/recommendations', recommendationRoutes);
+router.use('/drive', driveRoutes);
 
 export default router;
 

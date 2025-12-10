@@ -12,3 +12,4 @@ const analyticsEventSchema = new mongoose.Schema({
 export default mongoose.model('AnalyticsEvent', analyticsEventSchema);
 
 
+
