@@ -1,29 +1,24 @@
-// api/index.js
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import connectDB from "../config/db.js";
 import routes from "../routes/index.js";
-import driveRoutes from '../routes/driveRoutes.js';
+import driveRoutes from "../routes/driveRoutes.js";
 
-// Cargar variables de entorno desde .env en la raíz del proyecto
 dotenv.config();
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Conectar a MongoDB
 connectDB();
 
-// Rutas principales
 app.use("/api", routes);
+app.use("/drive", driveRoutes);
 
-// Ruta básica de prueba
 app.get("/", (req, res) => {
-  res.json({ message: "Einflix API funcionando" });
+  res.json({ message: "Einflix API funcionando en Vercel" });
 });
 
-app.use('/drive', driveRoutes);
-
+// Exporta como función serverless para Vercel
 export default app;
