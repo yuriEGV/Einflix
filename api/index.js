@@ -4,6 +4,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import connectDB from "../config/db.js";
 import routes from "../routes/index.js";
+import driveRoutes from '../routes/driveRoutes.js';
 
 // Cargar variables de entorno desde .env en la raíz del proyecto
 dotenv.config();
@@ -22,5 +23,7 @@ app.use("/api", routes);
 app.get("/", (req, res) => {
   res.json({ message: "Einflix API funcionando" });
 });
+
+app.use('/drive', driveRoutes);
 
 export default app;

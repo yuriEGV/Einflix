@@ -1,4 +1,4 @@
-import express from "express";
+/*import express from "express";
 import { readDriveLinks } from "../utils/readLinks.js";
 
 const router = express.Router();
@@ -13,4 +13,17 @@ router.get("/read-drive-links", async (_req, res) => {
 });
 
 export default router;
+*/
 
+import express from 'express';
+import { getDriveLinks } from '../controllers/driveController.js';
+
+
+
+const router = express.Router();
+
+
+router.get('/', getDriveLinks);
+
+
+export default router;

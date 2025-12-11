@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="/gallery.css">
+<title>Galería Einflix</title>
+</head>
+<body>
+
+
+<h1 class="title">Galería Einflix</h1>
+<div class="gallery-container">
+
+
+<% items.forEach(item => { %>
+
+
+<div class="gallery-item">
+<img src="<%= item %>" alt="Drive Image" />
+</div>
+
+
+<% }) %>
+
+
+</div>
+
+
+</body>
+</html>
