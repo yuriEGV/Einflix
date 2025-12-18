@@ -40,6 +40,14 @@ export default function GalleryPage() {
 
     const featuredItem = items[0]
 
+    const handleItemClick = (it) => {
+        if (it.type === 'folder') {
+            window.open(it.original, '_blank')
+        } else {
+            setActive(it)
+        }
+    }
+
     return (
         <main>
             <header className={`header ${scrolled ? 'scrolled' : ''}`}>
@@ -58,8 +66,8 @@ export default function GalleryPage() {
                         <h2 className="hero-title">{featuredItem.title}</h2>
                         <p className="hero-desc">Descubre contenido exclusivo guardado en la nube. Reproducción instantánea y calidad garantizada.</p>
                         <div style={{ display: 'flex', gap: '1rem' }}>
-                            <button className="btn btn-primary" onClick={() => setActive(featuredItem)}>
-                                <span>▶</span> Reproducir
+                            <button className="btn btn-primary" onClick={() => handleItemClick(featuredItem)}>
+                                <span>▶</span> {featuredItem.type === 'folder' ? 'Abrir Carpeta' : 'Reproducir'}
                             </button>
                             <button className="btn btn-secondary">
                                 <span>ⓘ</span> Más información
@@ -79,12 +87,12 @@ export default function GalleryPage() {
                             ))
                         ) : (
                             items.map((it) => (
-                                <div key={it.id} className="card" onClick={() => setActive(it)}>
+                                <div key={it.id} className="card" onClick={() => handleItemClick(it)}>
                                     <img src={it.thumbnail} alt={it.title} loading="lazy" />
                                     <div className="card-info">
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                             <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>{it.title}</span>
-                                            <span className="badge">{it.type}</span>
+                                            <span className="badge">{it.type === 'folder' ? '📁' : '🎬'}</span>
                                         </div>
                                     </div>
                                 </div>
