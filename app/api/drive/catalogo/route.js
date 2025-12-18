@@ -47,25 +47,29 @@ export async function GET() {
 
             if (!id) return null;
 
-            // Imagen por defecto basada en la categoría si no hay customImg
+            // Elección de miniatura con prioridades inteligentes
             let thumbnail = customImg || `https://lh3.googleusercontent.com/u/0/d/${id}=w600-h400-n`;
 
-            // Mapeo extendido de imágenes por categoría
-            if (!customImg && category) {
-                const cat = category.toLowerCase();
-                const categoryImages = {
-                    'pelicula': 'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=800&q=80',
-                    'serie': 'https://images.unsplash.com/photo-1522869635100-9f4c5e86aa37?w=800&q=80',
-                    'anime': 'https://images.unsplash.com/photo-1578632738980-433120152918?w=800&q=80',
-                    'novedades': 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=800&q=80',
-                    'maratón': 'https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?w=800&q=80',
-                    'favoritos': 'https://images.unsplash.com/photo-1478720568477-152d9b164e26?w=800&q=80',
-                    'colección': 'https://images.unsplash.com/photo-1461360370896-922624d12aa1?w=800&q=80',
-                    'streaming': 'https://images.unsplash.com/photo-1593784991095-a205069470b6?w=800&q=80',
-                    'premium': 'https://images.unsplash.com/photo-1550745165-9bc0b25272a7?w=800&q=80',
-                    'biblioteca': 'https://images.unsplash.com/photo-1507014498014-97050e8902f2?w=800&q=80'
-                };
+            // Mapeo extendido para forzar imágenes temáticas si es de Google Drive (que suelen fallar)
+            // o si coincide la categoría.
+            const cat = (category || "").toLowerCase();
+            const categoryImages = {
+                'pelicula': 'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=800&q=80',
+                'serie': 'https://images.unsplash.com/photo-1522869635100-9f4c5e86aa37?w=800&q=80',
+                'anime': 'https://images.unsplash.com/photo-1578632738980-433120152918?w=800&q=80',
+                'novedades': 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=800&q=80',
+                'maratón': 'https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?w=800&q=80',
+                'favoritos': 'https://images.unsplash.com/photo-1478720568477-152d9b164e26?w=800&q=80',
+                'colección': 'https://images.unsplash.com/photo-1461360370896-922624d12aa1?w=800&q=80',
+                'streaming': 'https://images.unsplash.com/photo-1593784991095-a205069470b6?w=800&q=80',
+                'premium': 'https://images.unsplash.com/photo-1550745165-9bc0b25272a7?w=800&q=80',
+                'biblioteca': 'https://images.unsplash.com/photo-1507014498014-97050e8902f2?w=800&q=80',
+                'galería': 'https://images.unsplash.com/photo-1492037766660-2a56f9eb3fcb?w=800&q=80',
+                'einflix': 'https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?w=800&q=80'
+            };
 
+            // Si la imagen actual es de drive (que no cargan bien) o no hay imagen, buscamos por categoría
+            if (!customImg || customImg.includes('drive.google.com/thumbnail')) {
                 for (const [key, url] of Object.entries(categoryImages)) {
                     if (cat.includes(key)) {
                         thumbnail = url;
