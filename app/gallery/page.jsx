@@ -90,9 +90,12 @@ export default function GalleryPage() {
                                 <div key={it.id} className="card" onClick={() => handleItemClick(it)}>
                                     <img src={it.thumbnail} alt={it.title} loading="lazy" />
                                     <div className="card-info">
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                            <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>{it.title}</span>
-                                            <span className="badge">{it.type === 'folder' ? '📁' : '🎬'}</span>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                            <span className="badge" style={{ alignSelf: 'flex-start', marginBottom: '4px' }}>{it.category}</span>
+                                            <span style={{ fontSize: '1rem', fontWeight: 600, lineHeight: '1.2' }}>{it.title}</span>
+                                            <span style={{ fontSize: '0.8rem', color: '#aaa', marginTop: '4px' }}>
+                                                {it.type === 'folder' ? '📁 Ver Carpeta' : '🎬 Reproducir'}
+                                            </span>
                                         </div>
                                     </div>
                                 </div>
