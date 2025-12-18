@@ -2,10 +2,6 @@
     "name": "einflix-root",
     "version": "1.0.0",
     "private": true,
-    "workspaces": [
-        "backend",
-        "frontend"
-    ],
     "scripts": {
         "start": "concurrently \"npm run start:backend\" \"npm run start:frontend\"",
         "start:backend": "cd backend && npm start",
