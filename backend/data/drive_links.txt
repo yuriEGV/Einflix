@@ -1,4 +1,4 @@
-[
+
   {
     "id": "1Gny7qO30-nCP76IXi6iwZ5lLmEEehz3L",
     "title": "Colección 1",
@@ -79,7 +79,7 @@
     "cover": "https://drive.google.com/thumbnail?id=1DCj72PuUm4bAbk7WSl5rA86FuXvag6fh&sz=w600",
     "tags": ["einflix"]
   }
-[
+
   {
     "id": "1Gny7qO30-nCP76IXi6iwZ5lLmEEehz3L",
     "title": "Colección 1",
@@ -464,6 +464,6 @@
     "cover": "https://drive.google.com/thumbnail?id=1jM0a4cS5wo3KndAOdVsvplZxw7O4D8NX&sz=w600",
     "tags": ["explorar", "compartida"]
   }
-]
+
 
 
