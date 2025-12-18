@@ -6,6 +6,7 @@ export async function GET() {
     try {
         const possiblePaths = [
             path.join(process.cwd(), 'data', 'drive_links.txt'),
+            path.join(process.cwd(), 'backend', 'data', 'drive_links.txt'),
             path.join(process.cwd(), 'frontend', 'data', 'drive_links.txt'), // Legacy
         ];
 
@@ -27,8 +28,9 @@ export async function GET() {
             .filter(line => line && line.includes('drive.google.com'));
 
         const catalog = lines.map((line, index) => {
-            // Formato esperado: URL | Título | Categoría | Imagen (Opcional)
-            const [link, title, category, customImg] = line.split('|').map(s => s.trim());
+            // Formato: URL | Título | Categoría | Imagen | Descripción
+            const parts = line.split('|').map(s => s.trim());
+            const [link, title, category, customImg, description] = parts;
 
             let id = '';
             let type = 'video';
@@ -58,8 +60,9 @@ export async function GET() {
 
             return {
                 id,
-                title: title || `Título no definido ${index + 1}`,
+                title: title || `Contenido ${index + 1}`,
                 category: category || (type === 'folder' ? 'Carpeta' : 'Multimedia'),
+                description: description || 'Sin descripción disponible.',
                 type,
                 original: link,
                 preview: `https://drive.google.com/file/d/${id}/preview`,

@@ -128,7 +128,7 @@ export default function GalleryPage() {
                                 <span style={{ border: '1px solid #777', padding: '0 4px', fontSize: '0.8rem' }}>HD</span>
                             </div>
                             <p style={{ lineHeight: 1.5, fontSize: '1.1rem' }}>
-                                Estás viendo "{active.title}". Este contenido se sirve directamente desde Google Drive y está optimizado para su visualización en Einflix.
+                                {active.description}
                             </p>
                         </div>
                     </div>
