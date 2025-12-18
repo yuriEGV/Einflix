@@ -1,13 +1,4 @@
 {
     "version": 2,
-    "rewrites": [
-        {
-            "source": "/api/drive/catalogo",
-            "destination": "/frontend/api/drive/catalogo"
-        },
-        {
-            "source": "/(.*)",
-            "destination": "/frontend/$1"
-        }
-    ]
+    "framework": "nextjs"
 }
