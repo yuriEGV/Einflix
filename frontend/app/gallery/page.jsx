@@ -19,8 +19,14 @@ export default function GalleryPage() {
             try {
                 // Fetch from the new catalogo endpoint
                 const res = await fetch('/api/drive/catalogo')
-                const data = await res.json()
-                setItems(Array.isArray(data) ? data : [])
+                const text = await res.text()
+                try {
+                    const data = JSON.parse(text)
+                    setItems(Array.isArray(data) ? data : [])
+                } catch (parseError) {
+                    console.error("JSON Parse Error. Raw response:", text)
+                    throw new Error("Invalid JSON response from server")
+                }
             } catch (e) {
                 console.error("Error loading catalogue:", e)
             } finally {

@@ -14,7 +14,6 @@ app.use(express.json());
 connectDB();
 
 app.use("/api", routes);
-app.use("/drive", driveRoutes);
 
 app.get("/", (req, res) => {
   res.json({ message: "Einflix API funcionando en Vercel" });

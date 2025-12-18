@@ -14,7 +14,11 @@ const extractId = (url) => {
 };
 
 export const getDriveLinks = (req, res) => {
-  const filePath = path.join(__dirname, '..', 'data', 'drive_links.txt');
+  let filePath = path.join(__dirname, 'data', 'drive_links.txt');
+
+  if (!fs.existsSync(filePath)) {
+    filePath = path.join(__dirname, '..', 'data', 'drive_links.txt');
+  }
 
   try {
     const content = fs.readFileSync(filePath, 'utf-8');
@@ -42,10 +46,15 @@ export const getDriveLinks = (req, res) => {
  * Sirve el catálogo multimedia en formato JSON para el frontend
  */
 export const getCatalogo = (req, res) => {
-  const filePath = path.join(__dirname, '..', 'data', 'drive_links.txt');
+  let filePath = path.join(__dirname, 'data', 'drive_links.txt');
+
+  if (!fs.existsSync(filePath)) {
+    filePath = path.join(__dirname, '..', 'data', 'drive_links.txt');
+  }
 
   try {
     if (!fs.existsSync(filePath)) {
+      console.error('Archivo no encontrado en:', filePath);
       return res.status(404).json({ error: 'Archivo de enlaces no encontrado' });
     }
 
@@ -72,7 +81,7 @@ export const getCatalogo = (req, res) => {
 
     res.json(videos);
   } catch (err) {
-    console.error('Error procesando catálogo:', err);
-    res.status(500).json({ error: 'Error interno del servidor' });
+    console.error('Error procesando catálogo:', err.message, 'Path:', filePath);
+    res.status(500).json({ error: 'Error interno del servidor: ' + err.message });
   }
 };
