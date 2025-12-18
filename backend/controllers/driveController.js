@@ -1,5 +1,9 @@
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 /**
  * Extrae el ID de una URL de Google Drive (archivo o carpeta)
@@ -10,7 +14,7 @@ const extractId = (url) => {
 };
 
 export const getDriveLinks = (req, res) => {
-  const filePath = path.join(process.cwd(), 'data', 'drive_links.txt');
+  const filePath = path.join(__dirname, '..', 'data', 'drive_links.txt');
 
   try {
     const content = fs.readFileSync(filePath, 'utf-8');
@@ -29,7 +33,7 @@ export const getDriveLinks = (req, res) => {
     res.render('gallery', { items: embedLinks });
 
   } catch (err) {
-    console.error('Error leyendo drive_links.txt', err);
+    console.error('Error leyendo drive_links.txt:', err.message, 'Path:', filePath);
     res.status(500).json({ error: 'No se pudo leer el archivo' });
   }
 };
@@ -38,7 +42,7 @@ export const getDriveLinks = (req, res) => {
  * Sirve el catálogo multimedia en formato JSON para el frontend
  */
 export const getCatalogo = (req, res) => {
-  const filePath = path.join(process.cwd(), 'data', 'drive_links.txt');
+  const filePath = path.join(__dirname, '..', 'data', 'drive_links.txt');
 
   try {
     if (!fs.existsSync(filePath)) {
