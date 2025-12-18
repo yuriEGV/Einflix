@@ -16,7 +16,7 @@ export default router;
 */
 
 import express from 'express';
-import { getDriveLinks } from '../controllers/driveController.js';
+import { getDriveLinks, getCatalogo } from '../controllers/driveController.js';
 
 
 
@@ -24,6 +24,7 @@ const router = express.Router();
 
 
 router.get('/', getDriveLinks);
+router.get('/catalogo', getCatalogo);
 
 
 export default router;
