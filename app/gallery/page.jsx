@@ -63,16 +63,8 @@ export default function GalleryPage() {
                         style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     />
                     <div className="hero-content">
-                        <h2 className="hero-title">{featuredItem.title}</h2>
-                        <p className="hero-desc">Descubre contenido exclusivo guardado en la nube. Reproducción instantánea y calidad garantizada.</p>
-                        <div style={{ display: 'flex', gap: '1rem' }}>
-                            <button className="btn btn-primary" onClick={() => handleItemClick(featuredItem)}>
-                                <span>▶</span> {featuredItem.type === 'folder' ? 'Abrir Carpeta' : 'Reproducir'}
-                            </button>
-                            <button className="btn btn-secondary">
-                                <span>ⓘ</span> Más información
-                            </button>
-                        </div>
+                        <h2 className="hero-title">EINFLIX : COLECCION DE ENLACES</h2>
+                        <p className="hero-desc">DESCUBRE CONTENIDO EXCLUSIVO EN LA NUBE, REPRODUCCION INSTANTANEA DE CALIDAD.</p>
                     </div>
                 </div>
             )}
