@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 export default function GalleryPage() {
     const [items, setItems] = useState([])
@@ -48,10 +49,28 @@ export default function GalleryPage() {
         }
     }
 
+    const handleLogout = async () => {
+        try {
+            await fetch('/api/auth/logout', { method: 'POST' });
+            router.push('/login');
+            router.refresh();
+        } catch (e) {
+            console.error("Logout failed", e);
+        }
+    }
+
     return (
         <main>
             <header className={`header ${scrolled ? 'scrolled' : ''}`}>
-                <h1>EINFLIX</h1>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                    <h1>EINFLIX</h1>
+                    <button
+                        onClick={handleLogout}
+                        style={{ background: 'var(--netflix-red)', border: 'none', color: 'white', padding: '8px 16px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
+                    >
+                        Cerrar Sesión
+                    </button>
+                </div>
             </header>
 
             {/* Hero Section */}

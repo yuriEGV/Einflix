@@ -2,8 +2,10 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
-export default function LoginPage() {
+export default function RegisterPage() {
+    const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
@@ -16,19 +18,18 @@ export default function LoginPage() {
         setError('');
 
         try {
-            const res = await fetch('/api/auth/login', {
+            const res = await fetch('/api/auth/register', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password }),
+                body: JSON.stringify({ name, email, password }),
             });
 
             const data = await res.json();
 
             if (data.success) {
-                router.push('/gallery');
-                router.refresh();
+                router.push('/login');
             } else {
-                setError(data.message || 'Credenciales incorrectas');
+                setError(data.message || 'Error al registrarse');
             }
         } catch (err) {
             setError('Error de conexión con el servidor');
@@ -41,13 +42,25 @@ export default function LoginPage() {
         <div className="login-wrapper">
             <div className="login-backdrop"></div>
             <header className="header" style={{ position: 'absolute', background: 'transparent' }}>
-                <h1 style={{ color: '#e50914', fontSize: '2.5rem', fontWeight: 'bold' }}>EINFLIX</h1>
+                <Link href="/" style={{ textDecoration: 'none' }}>
+                    <h1 style={{ color: '#e50914', fontSize: '2.5rem', fontWeight: 'bold' }}>EINFLIX</h1>
+                </Link>
             </header>
 
             <div className="login-container">
                 <form className="login-form" onSubmit={handleSubmit}>
-                    <h2>Iniciar Sesión</h2>
+                    <h2>Registrarse</h2>
                     {error && <div className="error-message">{error}</div>}
+
+                    <div className="input-group">
+                        <input
+                            type="text"
+                            placeholder="Nombre completo"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            required
+                        />
+                    </div>
 
                     <div className="input-group">
                         <input
@@ -62,22 +75,20 @@ export default function LoginPage() {
                     <div className="input-group">
                         <input
                             type="password"
-                            placeholder="Contraseña"
+                            placeholder="Contraseña (mín. 6 caracteres)"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
+                            minLength={6}
                             required
                         />
                     </div>
 
                     <button type="submit" className="login-btn" disabled={loading}>
-                        {loading ? 'Entrando...' : 'Iniciar Sesión'}
+                        {loading ? 'Creando cuenta...' : 'Registrarse'}
                     </button>
 
                     <div className="login-footer">
-                        <div style={{ marginBottom: '15px' }}>
-                            <Link href="/forgot-password" style={{ color: '#b3b3b3', textDecoration: 'none', fontSize: '0.8rem' }}>¿Olvidaste tu contraseña?</Link>
-                        </div>
-                        <span>¿Primera vez en Einflix? <Link href="/register" style={{ color: 'white', fontWeight: 'bold', textDecoration: 'none' }}>Registrate ahora</Link></span>
+                        <span>¿Ya tienes cuenta? <Link href="/login" style={{ color: 'white', fontWeight: 'bold' }}>Inicia sesión</Link></span>
                     </div>
                 </form>
             </div>

@@ -1,26 +1,33 @@
 import { NextResponse } from 'next/server';
 import { SignJWT } from 'jose';
+import dbConnect from '@/lib/mongodb';
+import User from '@/models/User';
 
 const SECRET_KEY = process.env.JWT_SECRET || 'einflix_super_secret_key_2024';
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@einflix.com';
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'einflix2024';
 
 export async function POST(req) {
     try {
+        await dbConnect();
         const { email, password } = await req.json();
 
-        // Validación básica
-        if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
+        // Buscar usuario en la base de datos
+        const user = await User.findOne({ email: email.toLowerCase() });
+
+        if (user && (await user.comparePassword(password))) {
             const secret = new TextEncoder().encode(SECRET_KEY);
 
             // Crear el token con expiración de 3 horas
-            const token = await new SignJWT({ email })
+            const token = await new SignJWT({ email: user.email, id: user._id, name: user.name })
                 .setProtectedHeader({ alg: 'HS256' })
                 .setIssuedAt()
                 .setExpirationTime('3h')
                 .sign(secret);
 
-            const response = NextResponse.json({ success: true, message: "Login exitoso" });
+            const response = NextResponse.json({
+                success: true,
+                message: "Login exitoso",
+                user: { name: user.name, email: user.email }
+            });
 
             // Configurar la cookie de sesión (3 horas)
             response.cookies.set('session_token', token, {
@@ -35,7 +42,7 @@ export async function POST(req) {
         }
 
         return NextResponse.json(
-            { success: false, message: "Credenciales inválidas" },
+            { success: false, message: "Correo o contraseña incorrectos" },
             { status: 401 }
         );
     } catch (error) {

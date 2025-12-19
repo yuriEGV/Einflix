@@ -1,34 +1,33 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
-export default function LoginPage() {
+export default function ForgotPasswordPage() {
     const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
+    const [message, setMessage] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
-    const router = useRouter();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
         setError('');
+        setMessage('');
 
         try {
-            const res = await fetch('/api/auth/login', {
+            const res = await fetch('/api/auth/forgot-password', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password }),
+                body: JSON.stringify({ email }),
             });
 
             const data = await res.json();
 
             if (data.success) {
-                router.push('/gallery');
-                router.refresh();
+                setMessage(data.message);
             } else {
-                setError(data.message || 'Credenciales incorrectas');
+                setError(data.message || 'Error al procesar la solicitud');
             }
         } catch (err) {
             setError('Error de conexión con el servidor');
@@ -41,13 +40,20 @@ export default function LoginPage() {
         <div className="login-wrapper">
             <div className="login-backdrop"></div>
             <header className="header" style={{ position: 'absolute', background: 'transparent' }}>
-                <h1 style={{ color: '#e50914', fontSize: '2.5rem', fontWeight: 'bold' }}>EINFLIX</h1>
+                <Link href="/" style={{ textDecoration: 'none' }}>
+                    <h1 style={{ color: '#e50914', fontSize: '2.5rem', fontWeight: 'bold' }}>EINFLIX</h1>
+                </Link>
             </header>
 
             <div className="login-container">
                 <form className="login-form" onSubmit={handleSubmit}>
-                    <h2>Iniciar Sesión</h2>
+                    <h2>Recuperar Contraseña</h2>
+                    <p style={{ color: '#ccc', marginBottom: '20px', fontSize: '0.9rem' }}>
+                        Introduce tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña.
+                    </p>
+
                     {error && <div className="error-message">{error}</div>}
+                    {message && <div style={{ backgroundColor: '#46d369', color: 'white', padding: '10px', borderRadius: '4px', marginBottom: '20px' }}>{message}</div>}
 
                     <div className="input-group">
                         <input
@@ -59,25 +65,12 @@ export default function LoginPage() {
                         />
                     </div>
 
-                    <div className="input-group">
-                        <input
-                            type="password"
-                            placeholder="Contraseña"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            required
-                        />
-                    </div>
-
                     <button type="submit" className="login-btn" disabled={loading}>
-                        {loading ? 'Entrando...' : 'Iniciar Sesión'}
+                        {loading ? 'Enviando...' : 'Enviar enlace'}
                     </button>
 
                     <div className="login-footer">
-                        <div style={{ marginBottom: '15px' }}>
-                            <Link href="/forgot-password" style={{ color: '#b3b3b3', textDecoration: 'none', fontSize: '0.8rem' }}>¿Olvidaste tu contraseña?</Link>
-                        </div>
-                        <span>¿Primera vez en Einflix? <Link href="/register" style={{ color: 'white', fontWeight: 'bold', textDecoration: 'none' }}>Registrate ahora</Link></span>
+                        <span>¿Recordaste tu contraseña? <Link href="/login" style={{ color: 'white', fontWeight: 'bold' }}>Inicia sesión</Link></span>
                     </div>
                 </form>
             </div>
