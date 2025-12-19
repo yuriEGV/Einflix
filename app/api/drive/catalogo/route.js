@@ -48,7 +48,12 @@ export async function GET() {
             if (!id) return null;
 
             // Elección de miniatura con prioridades inteligentes
-            let thumbnail = customImg || `https://lh3.googleusercontent.com/u/0/d/${id}=w600-h400-n`;
+            let thumbnail = customImg || `/api/drive/thumbnail?id=${id}`;
+
+            // Si la imagen es un link directo de drive antiguo, redirigirla al proxy
+            if (customImg && customImg.includes('drive.google.com/thumbnail')) {
+                thumbnail = `/api/drive/thumbnail?id=${id}`;
+            }
 
             // Mapeo extendido para forzar imágenes temáticas si es de Google Drive (que suelen fallar)
             // o si coincide la categoría.

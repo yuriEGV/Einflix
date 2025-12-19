@@ -77,7 +77,7 @@ export default function GalleryPage() {
             {!loading && featuredItem && (
                 <div className="hero">
                     <img
-                        src={featuredItem.thumbnail.replace('sz=w600', 'sz=w1200')}
+                        src={featuredItem.thumbnail.includes('unsplash') ? featuredItem.thumbnail.replace('w=800', 'w=1600') : featuredItem.thumbnail}
                         alt="Featured"
                         style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     />
