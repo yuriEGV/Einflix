@@ -1,0 +1,83 @@
+'use client';
+
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+
+export default function LoginPage() {
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
+    const router = useRouter();
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        setError('');
+
+        try {
+            const res = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password }),
+            });
+
+            const data = await res.json();
+
+            if (data.success) {
+                router.push('/gallery');
+                router.refresh();
+            } else {
+                setError(data.message || 'Credenciales incorrectas');
+            }
+        } catch (err) {
+            setError('Error de conexión con el servidor');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className="login-wrapper">
+            <div className="login-backdrop"></div>
+            <header className="header" style={{ position: 'absolute', background: 'transparent' }}>
+                <h1 style={{ color: '#e50914', fontSize: '2.5rem', fontWeight: 'bold' }}>EINFLIX</h1>
+            </header>
+
+            <div className="login-container">
+                <form className="login-form" onSubmit={handleSubmit}>
+                    <h2>Iniciar Sesión</h2>
+                    {error && <div className="error-message">{error}</div>}
+
+                    <div className="input-group">
+                        <input
+                            type="email"
+                            placeholder="Correo electrónico"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            required
+                        />
+                    </div>
+
+                    <div className="input-group">
+                        <input
+                            type="password"
+                            placeholder="Contraseña"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
+                        />
+                    </div>
+
+                    <button type="submit" className="login-btn" disabled={loading}>
+                        {loading ? 'Entrando...' : 'Iniciar Sesión'}
+                    </button>
+
+                    <div className="login-footer">
+                        <span>¿Necesitas ayuda?</span>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+}

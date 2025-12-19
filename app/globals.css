@@ -1,9 +1,13 @@
+@import url('https://fonts.googleapis.com/css2?family=Netflix+Sans:wght@300;400;700&family=Outfit:wght@300;400;600;700&display=swap');
+
 :root {
-  --background: #141414;
-  --foreground: #ffffff;
-  --primary: #e50914;
-  --secondary: #b3b3b3;
+  --netflix-red: #e50914;
+  --dark-bg: #141414;
   --card-bg: #181818;
+  --foreground: #ffffff;
+  /* Kept from original, not in new :root but used elsewhere */
+  --secondary: #b3b3b3;
+  /* Kept from original, not in new :root but used elsewhere */
   --hover-bg: #2b2b2b;
   --glass-bg: rgba(20, 20, 20, 0.7);
   --border-radius: 4px;
@@ -17,9 +21,9 @@
 }
 
 body {
-  background-color: var(--background);
-  color: var(--foreground);
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background-color: var(--dark-bg);
+  color: white;
+  font-family: 'Outfit', 'Netflix Sans', sans-serif;
   overflow-x: hidden;
 }
 
@@ -30,7 +34,7 @@ body {
 
 .header {
   height: 68px;
-  background: linear-gradient(to bottom, rgba(0,0,0,0.7) 10%, transparent);
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.7) 10%, transparent);
   display: flex;
   align-items: center;
   padding: 0 4%;
@@ -69,7 +73,7 @@ body {
   left: 0;
   right: 0;
   height: 7.4vw;
-  background-image: linear-gradient(180deg,transparent,rgba(37,37,37,.61),#141414);
+  background-image: linear-gradient(180deg, transparent, rgba(37, 37, 37, .61), #141414);
 }
 
 .hero-content {
@@ -84,7 +88,7 @@ body {
   font-size: 3.5rem;
   font-weight: 800;
   margin-bottom: 1.2rem;
-  text-shadow: 2px 2px 4px rgba(0,0,0,0.45);
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.45);
 }
 
 .hero-desc {
@@ -92,7 +96,7 @@ body {
   color: var(--secondary);
   line-height: 1.4;
   margin-bottom: 1.5rem;
-  text-shadow: 2px 2px 4px rgba(0,0,0,0.45);
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.45);
 }
 
 .btn {
@@ -114,7 +118,7 @@ body {
 }
 
 .btn-primary:hover {
-  background-color: rgba(255,255,255,0.75);
+  background-color: rgba(255, 255, 255, 0.75);
 }
 
 .btn-secondary {
@@ -165,7 +169,7 @@ body {
 .card:hover {
   transform: scale(1.1);
   z-index: 30;
-  box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
 }
 
 .card img {
@@ -179,7 +183,7 @@ body {
   bottom: 0;
   left: 0;
   right: 0;
-  background: linear-gradient(transparent, rgba(0,0,0,0.9));
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.9));
   padding: 0.5rem;
   opacity: 0;
   transition: opacity 0.3s;
@@ -203,7 +207,7 @@ body {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0,0,0,0.85);
+  background-color: rgba(0, 0, 0, 0.85);
   z-index: 1000;
   display: flex;
   align-items: center;
@@ -216,7 +220,7 @@ body {
   background-color: #181818;
   border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
   position: relative;
 }
 
@@ -224,7 +228,7 @@ body {
   position: absolute;
   top: 15px;
   right: 15px;
-  background: rgba(0,0,0,0.5);
+  background: rgba(0, 0, 0, 0.5);
   color: white;
   border: none;
   width: 32px;
@@ -264,4 +268,110 @@ body {
   gap: 1rem;
   color: var(--secondary);
   margin-bottom: 1.5rem;
+}
+
+/* Login Styles */
+.login-wrapper {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-image: url('https://images.unsplash.com/photo-1542204172-3f2fea459039?q=80&w=2070&auto=format&fit=crop');
+  background-size: cover;
+  background-position: center;
+}
+
+.login-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(0deg, #141414 0%, rgba(20, 20, 20, 0.8) 50%, #141414 100%);
+  z-index: 1;
+}
+
+.login-container {
+  position: relative;
+  z-index: 10;
+  background-color: rgba(0, 0, 0, 0.75);
+  border-radius: 8px;
+  padding: 60px;
+  width: 100%;
+  max-width: 450px;
+}
+
+.login-form h2 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 28px;
+  color: white;
+}
+
+.error-message {
+  background-color: #e87c03;
+  color: white;
+  padding: 10px 15px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  font-size: 0.9rem;
+}
+
+.input-group {
+  margin-bottom: 16px;
+}
+
+.input-group input {
+  width: 100%;
+  padding: 16px 20px;
+  border-radius: 4px;
+  border: none;
+  background-color: #333;
+  color: white;
+  font-size: 1rem;
+}
+
+.input-group input:focus {
+  outline: none;
+  background-color: #454545;
+}
+
+.login-btn {
+  width: 100%;
+  padding: 16px;
+  background-color: var(--netflix-red);
+  color: white;
+  font-size: 1rem;
+  font-weight: 700;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 24px;
+  transition: background-color 0.2s;
+}
+
+.login-btn:hover {
+  background-color: #f6121d;
+}
+
+.login-btn:disabled {
+  background-color: #b90913;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.login-footer {
+  margin-top: 30px;
+  color: #737373;
+  font-size: 0.9rem;
+}
+
+.login-footer span {
+  cursor: pointer;
+}
+
+.login-footer span:hover {
+  text-decoration: underline;
 }
