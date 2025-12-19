@@ -19,6 +19,11 @@ const UserSchema = new mongoose.Schema({
     },
     resetToken: String,
     resetTokenExpiry: Date,
+    isPaid: {
+        type: Boolean,
+        default: false
+    },
+    subscriptionExpiry: Date,
 }, { timestamps: true });
 
 // Encriptar contraseña antes de guardar

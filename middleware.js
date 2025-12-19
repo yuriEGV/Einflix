@@ -24,7 +24,16 @@ export async function middleware(req) {
 
     try {
         const secret = new TextEncoder().encode(SECRET_KEY);
-        await jwtVerify(token, secret);
+        const { payload } = await jwtVerify(token, secret);
+
+        // Evitar bucle infinito si ya está en la página de pago
+        if (pathname === '/payment') return NextResponse.next();
+
+        // Verificar si ha pagado
+        if (!payload.isPaid) {
+            return NextResponse.redirect(new URL('/payment', req.url));
+        }
+
         return NextResponse.next();
     } catch (error) {
         console.error('Middleware: Token inválido o expirado');

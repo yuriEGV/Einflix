@@ -16,8 +16,13 @@ export async function POST(req) {
         if (user && (await user.comparePassword(password))) {
             const secret = new TextEncoder().encode(SECRET_KEY);
 
-            // Crear el token con expiración de 3 horas
-            const token = await new SignJWT({ email: user.email, id: user._id, name: user.name })
+            // Crear el token con expiración de 3 horas e información de pago
+            const token = await new SignJWT({
+                email: user.email,
+                id: user._id,
+                name: user.name,
+                isPaid: user.isPaid || false
+            })
                 .setProtectedHeader({ alg: 'HS256' })
                 .setIssuedAt()
                 .setExpirationTime('3h')
