@@ -120,28 +120,12 @@ export async function GET(req) {
             }
         }
 
-        // Fallback for legacy drive_links.txt if exists and rawItems is empty
+        // Fallback removed to enforce plan security. 
+        // If rawItems is empty, it means the user has no access or the files are empty.
+        // We should not default to showing everything from the legacy file.
+
         if (rawItems.length === 0) {
-            const legacyPath = path.join(dataDir, 'drive_links.txt');
-            if (fs.existsSync(legacyPath)) {
-                const content = fs.readFileSync(legacyPath, 'utf8');
-                const lines = content.split('\n').filter(line => line.trim());
-                rawItems = lines.map(line => {
-                    const parts = line.split('|').map(p => p.trim());
-                    const url = parts[0] || '';
-                    const idMatch = url.match(/[-\w]{25,}/);
-                    const id = idMatch ? idMatch[0] : null;
-                    if (!id) return null;
-                    return {
-                        id,
-                        title: parts[1] || `Contenido ${id.slice(0, 6)}`,
-                        tags: parts[2] ? [parts[2]] : [],
-                        cover: parts[3] || null,
-                        description: parts[4] || 'Sin descripción disponible.',
-                        folderUrl: url
-                    };
-                }).filter(Boolean);
-            }
+            console.log("CATALOG: No items found for the current plan.");
         }
 
         const categoryImages = {
