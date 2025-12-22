@@ -28,7 +28,9 @@ export default function RegisterPage() {
             const data = await res.json();
 
             if (data.success) {
-                router.push('/login');
+                // Auto-logged in by backend, redirect to payment
+                // Pass planType as query param to pre-select in payment page if needed (though payment page defaults to manual selection, user context has it)
+                router.push('/payment');
             } else {
                 setError(data.message || 'Error al registrarse');
             }

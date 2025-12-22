@@ -1,5 +1,6 @@
 import dbConnect from '@/lib/mongodb';
 import User from '@/models/User';
+import { SignJWT } from 'jose';
 
 // Helper for JSON response
 function jsonResponse(data, status = 200) {
@@ -56,6 +57,28 @@ export async function POST(req) {
 
         console.log("User created:", user._id);
 
+        // --- Generate Token for Auto-Login ---
+        const secret = new TextEncoder().encode(process.env.JWT_SECRET || 'einflix_super_secret_key_2024');
+        const token = await new SignJWT({
+            email: user.email,
+            id: user._id.toString(),
+            name: user.name,
+            isPaid: false // New users are not paid initially
+        })
+            .setProtectedHeader({ alg: 'HS256' })
+            .setIssuedAt()
+            .setExpirationTime('3h')
+            .sign(secret);
+
+        const response = jsonResponse({
+            success: true,
+            message: "Usuario registrado con éxito",
+            user: { id: user._id, name: user.name, email: user.email }
+        });
+
+        const cookieValue = `session_token=${token}; Path=/; Max-Age=${3 * 60 * 60}; HttpOnly; SameSite=Lax${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`;
+        response.headers.append('Set-Cookie', cookieValue);
+
         // --- Enviar Correo de Bienvenida ---
         try {
             console.log("Configuring email transporter...");
@@ -91,8 +114,9 @@ export async function POST(req) {
 
             if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
                 console.log("Sending welcome email...");
-                await transporter.sendMail(mailOptions);
-                console.log("Email sent successfully.");
+                // Don't await email, send in background to speed up response
+                transporter.sendMail(mailOptions).catch(err => console.error("Email send async fail:", err));
+                console.log("Email queued.");
             } else {
                 console.log("Skipping email: EMAIL_USER or EMAIL_PASS not set in .env");
             }
@@ -102,11 +126,7 @@ export async function POST(req) {
             // No fallamos el registro si el correo falla, solo lo logueamos
         }
 
-        return jsonResponse({
-            success: true,
-            message: "Usuario registrado con éxito",
-            user: { id: user._id, name: user.name, email: user.email }
-        });
+        return response;
 
     } catch (error) {
         console.error("Register Error:", error);
