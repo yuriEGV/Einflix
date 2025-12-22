@@ -23,6 +23,10 @@ const UserSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
+    planType: {
+        type: String, // 'total', 'medium', 'basic'
+        default: null
+    },
     subscriptionExpiry: Date,
 }, { timestamps: true });
 

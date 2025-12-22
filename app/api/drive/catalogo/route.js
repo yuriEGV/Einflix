@@ -1,12 +1,66 @@
 import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
+import { jwtVerify } from 'jose';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+const SECRET_KEY = process.env.JWT_SECRET || 'einflix_super_secret_key_2024';
+
+export async function GET(req) {
     try {
+        // 1. Obtener User Plan del Token (o DB si queremos data fresca, pero Token es más rápido)
+        // Para cambios inmediatos mejor consultar DB si el token puede estar desactualizado, 
+        // pero por eficiencia usaremos el token o asumiremos que el frontend refresca el token al pagar.
+        // DADO que el callback redirige, el cliente DEBERIA refrescar su sesión/token, 
+        // pero Next.js App Router a veces mantiene cookies viejas.
+        // Vamos a leer la cookie directamente.
+
+        const token = req.cookies.get('session_token')?.value;
+        let planType = 'none';
+
+        if (token) {
+            try {
+                const secret = new TextEncoder().encode(SECRET_KEY);
+                const { payload } = await jwtVerify(token, secret);
+                // IMPORTANTE: En un escenario real, deberíamos consultar el User en DB para ver si el plan cambió RECIENTEMENTE
+                // y no confiar solo en el token viejo. Pero para este MVP confiamos en que 'isPaid' del token sea actualizado o 
+                // consultamos DB si queremos ser estrictos.
+                // Consultemos DB para estar seguros ya que acabamos de pagar.
+                const User = (await import('@/models/User')).default;
+                const dbConnect = (await import('@/lib/mongodb')).default;
+                await dbConnect();
+
+                const user = await User.findById(payload.id);
+                if (user && user.isPaid) {
+                    planType = user.planType || 'basic';
+                }
+            } catch (e) {
+                console.error("Token verification failed in catalog:", e);
+            }
+        }
+
         const dataDir = path.join(process.cwd(), 'data');
+        let allowedFiles = [];
+
+        // 2. Definir acceso por Plan
+        // Total: Todo
+        // Medium: Peliculas + Series
+        // Basic: Libros
+
+        if (planType === 'total') {
+            allowedFiles = ['peliculas.txt', 'series.txt', 'comics.txt', 'musica.txt', 'karaoke.txt', 'libros.txt', 'otros.txt'];
+        } else if (planType === 'medium') {
+            allowedFiles = ['peliculas.txt', 'series.txt'];
+        } else if (planType === 'basic') {
+            allowedFiles = ['libros.txt'];
+        } else {
+            // Usuario no pagado o sin plan: mostrar nada o demo?
+            // User requested plans filter content, so un-paid gets nothing or just "otros"?
+            // Let's return empty or public content if exists.
+            allowedFiles = [];
+        }
+
         const fileCategories = {
             'peliculas.txt': 'Película',
             'series.txt': 'Serie',
@@ -20,6 +74,9 @@ export async function GET() {
         let rawItems = [];
 
         for (const [filename, defaultCategory] of Object.entries(fileCategories)) {
+            // Filter: Only process if filename is in allowedFiles
+            if (!allowedFiles.includes(filename)) continue;
+
             const filePath = path.join(dataDir, filename);
             if (fs.existsSync(filePath)) {
                 const content = fs.readFileSync(filePath, 'utf8');

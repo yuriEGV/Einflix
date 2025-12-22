@@ -32,7 +32,10 @@ export async function POST(req) {
         const { payload } = await jwtVerify(token, secret);
         const userId = payload.id;
 
-        const { amount, title } = await req.json();
+        const { amount, title, planType, duration } = await req.json();
+
+        // Encode details in external_reference: userId|planType|duration
+        const externalRef = `${userId}|${planType || 'basic'}|${duration || 'monthly'}`;
 
         // Crear la preferencia de Mercado Pago
         const preference = {
@@ -50,7 +53,7 @@ export async function POST(req) {
                 pending: `${new URL(req.url).origin}/api/auth/payment/callback`
             },
             auto_return: 'approved',
-            external_reference: String(userId), // Ensure string for Mercado Pago
+            external_reference: externalRef,
         };
 
         const response = await mercadopago.preferences.create(preference);
