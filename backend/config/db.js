@@ -12,7 +12,8 @@ const connectDB = async () => {
     await mongoose.connect(uri);
     console.log("MongoDB conectado correctamente");
   } catch (error) {
-    console.error("Error conectando a MongoDB:", error);
+    console.error("CRITICAL ERROR: No se pudo conectar a MongoDB. Verifique su MONGO_URI y el whitelist de IP en Atlas.");
+    console.error("Detalle del error:", error.message);
   }
 };
 

@@ -6,9 +6,11 @@ const SECRET_KEY = process.env.JWT_SECRET || 'einflix_super_secret_key_2024';
 export async function middleware(req) {
     const { pathname } = req.nextUrl;
 
-    // Permitir acceso a la página de login y archivos estáticos
+    // Permitir acceso a páginas públicas y archivos estáticos
     if (
         pathname.startsWith('/login') ||
+        pathname.startsWith('/register') ||
+        pathname.startsWith('/forgot-password') ||
         pathname.startsWith('/_next') ||
         pathname.startsWith('/api/auth') ||
         pathname === '/favicon.ico'

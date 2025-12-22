@@ -61,7 +61,7 @@ export default function GalleryPage() {
 
     return (
         <main>
-            <header className={`header ${scrolled ? 'scrolled' : ''}`}>
+            <header className={`header ${scrolled ? 'scrolled' : ''}`} style={{ zIndex: 110 }}>
                 <h1 style={{ color: 'var(--netflix-red)', margin: 0 }}>EINFLIX</h1>
                 <button
                     onClick={handleLogout}
@@ -71,7 +71,9 @@ export default function GalleryPage() {
                         color: 'white',
                         padding: '6px 15px',
                         fontSize: '0.9rem',
-                        marginLeft: 'auto'
+                        marginLeft: 'auto',
+                        cursor: 'pointer',
+                        zIndex: 120
                     }}
                 >
                     Cerrar Sesión

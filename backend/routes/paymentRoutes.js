@@ -3,8 +3,7 @@ import { iniciarPago, callbackExitoso, callbackError } from '../controllers/paym
 const router = express.Router();
 
 router.post('/iniciar', iniciarPago);
-router.post('/webpay/callback-exito', callbackExitoso);
-router.post('/webpay/callback-error', callbackError);
+router.get('/feedback', callbackFeedback);
 
 export default router;
 

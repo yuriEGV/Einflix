@@ -43,4 +43,23 @@ export async function login(req, res) {
   }
 }
 
+export async function forgotPassword(req, res) {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      // Por seguridad, no decimos si el email existe o no
+      return res.status(200).json({ message: 'Si el correo existe, recibirá un enlace de recuperación.' });
+    }
+
+    // Aquí iría la lógica de generar un token y enviarlo por email
+    console.log(`Recuperación de contraseña solicitada para: ${email}`);
+
+    res.status(200).json({ message: 'Funcionalidad de recuperación en desarrollo. Contacte al soporte.' });
+  } catch (error) {
+    res.status(500).json({ error: 'Error procesando solicitud' });
+  }
+}
+
 
