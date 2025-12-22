@@ -21,7 +21,10 @@ export async function GET() {
         }
 
         if (!filePath) {
-            return NextResponse.json({ error: "Archivo de enlaces no encontrado" }, { status: 404 });
+            return new Response(JSON.stringify({ error: "Archivo de enlaces no encontrado" }), {
+                status: 404,
+                headers: { 'Content-Type': 'application/json' }
+            });
         }
 
         const content = fs.readFileSync(filePath, 'utf8');
@@ -111,9 +114,14 @@ export async function GET() {
         // 2. Ordenar alfabéticamente por título
         catalog.sort((a, b) => a.title.localeCompare(b.title));
 
-        return NextResponse.json(catalog);
+        return new Response(JSON.stringify(catalog), {
+            headers: { 'Content-Type': 'application/json' }
+        });
     } catch (error) {
         console.error("Error en la API de Catalogo:", error);
-        return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
+        return new Response(JSON.stringify({ error: "Error interno del servidor" }), {
+            status: 500,
+            headers: { 'Content-Type': 'application/json' }
+        });
     }
 }

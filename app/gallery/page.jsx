@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 export default function GalleryPage() {
+    const router = useRouter()
     const [items, setItems] = useState([])
     const [loading, setLoading] = useState(true)
     const [active, setActive] = useState(null)
@@ -52,7 +53,7 @@ export default function GalleryPage() {
     const handleLogout = async () => {
         try {
             await fetch('/api/auth/logout', { method: 'POST' });
-            router.push('/login');
+            router.push('/register');
             router.refresh();
         } catch (e) {
             console.error("Logout failed", e);

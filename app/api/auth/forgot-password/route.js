@@ -1,7 +1,16 @@
-import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import User from '@/models/User';
 import crypto from 'crypto';
+
+// Helper for JSON response
+function jsonResponse(data, status = 200) {
+    return new Response(JSON.stringify(data), {
+        status,
+        headers: {
+            'Content-Type': 'application/json',
+        },
+    });
+}
 
 export async function POST(req) {
     try {
@@ -9,33 +18,35 @@ export async function POST(req) {
         const { email } = await req.json();
 
         const user = await User.findOne({ email: email.toLowerCase() });
+
         if (!user) {
-            return NextResponse.json(
-                { success: false, message: "Si el correo está registrado, recibirás un enlace" },
-                { status: 200 } // Por seguridad devolvemos 200
+            return jsonResponse(
+                { success: false, message: "No existe una cuenta con este correo" },
+                404
             );
         }
 
-        // Generar token de recuperación
         const resetToken = crypto.randomBytes(32).toString('hex');
+        const resetTokenExpiry = Date.now() + 3600000; // 1 hora
+
         user.resetToken = resetToken;
-        user.resetTokenExpiry = Date.now() + 3600000; // 1 hora
+        user.resetTokenExpiry = resetTokenExpiry;
         await user.save();
 
-        // TODO: Implementar nodemailer para envío real.
-        // Por ahora simulamos que se envió.
-        console.log(`Reset Token para ${email}: ${resetToken}`);
+        // AQUÍ IRÍA EL ENVÍO DE CORREO (SendGrid, Nodemailer, etc.)
+        // Por ahora solo devolvemos el token para pruebas
 
-        return NextResponse.json({
+        return jsonResponse({
             success: true,
-            message: "Se ha enviado un enlace de recuperación a tu correo"
+            message: "Se ha enviado un correo de recuperación",
+            token: resetToken
         });
 
     } catch (error) {
         console.error("Forgot Password Error:", error);
-        return NextResponse.json(
+        return jsonResponse(
             { success: false, message: "Error al procesar la solicitud" },
-            { status: 500 }
+            500
         );
     }
 }

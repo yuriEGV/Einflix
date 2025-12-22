@@ -26,18 +26,13 @@ const UserSchema = new mongoose.Schema({
     subscriptionExpiry: Date,
 }, { timestamps: true });
 
-// Encriptar contraseña antes de guardar
-UserSchema.pre('save', async function (next) {
-    if (!this.isModified('password')) {
-        return next();
-    }
-    const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
-    next();
-});
+// Encriptar contraseña antes de guardar - REMOVED to avoid context issues in production
+// UserSchema.pre('save', async function (next) { ... });
 
 // Método para comparar contraseñas
 UserSchema.methods.comparePassword = async function (candidatePassword) {
+    // Importación dinámica para evitar problemas de contexto
+    const bcrypt = await import('bcryptjs');
     return await bcrypt.compare(candidatePassword, this.password);
 };
 

@@ -1,4 +1,3 @@
-import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import User from '@/models/User';
 
@@ -18,13 +17,13 @@ export async function GET(req) {
                 subscriptionExpiry: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
             });
 
-            return NextResponse.redirect(new URL('/gallery?payment=success', req.url));
+            return Response.redirect(new URL('/gallery?payment=success', req.url));
         } else {
-            return NextResponse.redirect(new URL('/payment?status=failed', req.url));
+            return Response.redirect(new URL('/payment?status=failed', req.url));
         }
     } catch (error) {
         console.error('Error Callback:', error.message);
-        return NextResponse.redirect(new URL('/payment?status=error', req.url));
+        return Response.redirect(new URL('/payment?status=error', req.url));
     }
 }
 

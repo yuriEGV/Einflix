@@ -1,5 +1,5 @@
 1:HL["/_next/static/css/939437140ccd15a9.css","style",{"crossOrigin":""}]
-0:["AuAyJ_xYVxlIxwGP-c2_F",[[["",{"children":["__PAGE__",{}]},"$undefined","$undefined",true],"$L2",[[["$","link","0",{"rel":"stylesheet","href":"/_next/static/css/939437140ccd15a9.css","precedence":"next","crossOrigin":""}]],"$L3"]]]]
+0:["HEeOISSWdhsMpv68WVvCg",[[["",{"children":["__PAGE__",{}]},"$undefined","$undefined",true],"$L2",[[["$","link","0",{"rel":"stylesheet","href":"/_next/static/css/939437140ccd15a9.css","precedence":"next","crossOrigin":""}]],"$L3"]]]]
 4:I[6954,[],""]
 5:I[7264,[],""]
 3:[["$","meta","0",{"charSet":"utf-8"}],["$","title","1",{"children":"Einflix - Gallery"}],["$","meta","2",{"name":"description","content":"Galería de archivos desde Google Drive"}],["$","meta","3",{"name":"viewport","content":"width=device-width, initial-scale=1"}]]

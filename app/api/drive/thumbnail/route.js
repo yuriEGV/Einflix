@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+// import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -7,7 +7,7 @@ export async function GET(req) {
     const id = searchParams.get('id');
 
     if (!id) {
-        return new NextResponse('Missing ID', { status: 400 });
+        return new Response('Missing ID', { status: 400 });
     }
 
     // URL de miniatura de Google Drive
@@ -25,10 +25,15 @@ export async function GET(req) {
         headers.set('Content-Type', response.headers.get('Content-Type') || 'image/jpeg');
         headers.set('Cache-Control', 'public, max-age=86400'); // Cache por 24 horas
 
-        return new NextResponse(blob, { headers });
+        return new Response(blob, { headers });
     } catch (error) {
         console.error('Thumbnail Proxy Error:', error);
         // Fallback a una imagen genérica si falla
-        return NextResponse.redirect('https://images.unsplash.com/photo-1485846234645-a62644f84728?w=600&q=80');
+        return new Response(null, {
+            status: 307,
+            headers: {
+                'Location': 'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=600&q=80'
+            }
+        });
     }
 }
