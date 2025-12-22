@@ -6,47 +6,71 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
     try {
-        const possiblePaths = [
-            path.join(process.cwd(), 'data', 'drive_links.txt'),
-            path.join(process.cwd(), 'backend', 'data', 'drive_links.txt'),
-            path.join(process.cwd(), 'frontend', 'data', 'drive_links.txt'), // Legacy
-        ];
+        const dataDir = path.join(process.cwd(), 'data');
+        const fileCategories = {
+            'peliculas.txt': 'Película',
+            'series.txt': 'Serie',
+            'comics.txt': 'Comic',
+            'musica.txt': 'Música',
+            'karaoke.txt': 'Karaoke',
+            'libros.txt': 'Libro',
+            'otros.txt': 'Otros'
+        };
 
-        let filePath = null;
-        for (const p of possiblePaths) {
-            if (fs.existsSync(p)) {
-                filePath = p;
-                break;
+        let rawItems = [];
+
+        for (const [filename, defaultCategory] of Object.entries(fileCategories)) {
+            const filePath = path.join(dataDir, filename);
+            if (fs.existsSync(filePath)) {
+                const content = fs.readFileSync(filePath, 'utf8');
+                const lines = content.split('\n').filter(line => line.trim());
+
+                const fileItems = lines.map(line => {
+                    const parts = line.split('|').map(p => p.trim());
+                    const url = parts[0] || '';
+                    const idMatch = url.match(/[-\w]{25,}/);
+                    const id = idMatch ? idMatch[0] : null;
+
+                    if (!id) return null;
+
+                    return {
+                        id,
+                        title: parts[1] || `Contenido ${id.slice(0, 6)}`,
+                        // Use category from file if tag is missing, otherwise use tag
+                        tags: parts[2] ? [parts[2]] : [defaultCategory],
+                        cover: parts[3] || null,
+                        description: parts[4] || 'Sin descripción disponible.',
+                        folderUrl: url
+                    };
+                }).filter(Boolean);
+
+                rawItems = rawItems.concat(fileItems);
             }
         }
 
-        if (!filePath) {
-            return new Response(JSON.stringify({ error: "Archivo de enlaces no encontrado" }), {
-                status: 404,
-                headers: { 'Content-Type': 'application/json' }
-            });
+        // Fallback for legacy drive_links.txt if exists and rawItems is empty
+        if (rawItems.length === 0) {
+            const legacyPath = path.join(dataDir, 'drive_links.txt');
+            if (fs.existsSync(legacyPath)) {
+                const content = fs.readFileSync(legacyPath, 'utf8');
+                const lines = content.split('\n').filter(line => line.trim());
+                rawItems = lines.map(line => {
+                    const parts = line.split('|').map(p => p.trim());
+                    const url = parts[0] || '';
+                    const idMatch = url.match(/[-\w]{25,}/);
+                    const id = idMatch ? idMatch[0] : null;
+                    if (!id) return null;
+                    return {
+                        id,
+                        title: parts[1] || `Contenido ${id.slice(0, 6)}`,
+                        tags: parts[2] ? [parts[2]] : [],
+                        cover: parts[3] || null,
+                        description: parts[4] || 'Sin descripción disponible.',
+                        folderUrl: url
+                    };
+                }).filter(Boolean);
+            }
         }
-
-        const content = fs.readFileSync(filePath, 'utf8');
-        const lines = content.split('\n').filter(line => line.trim());
-
-        let rawItems = lines.map(line => {
-            const parts = line.split('|').map(p => p.trim());
-            const url = parts[0] || '';
-            const idMatch = url.match(/[-\w]{25,}/);
-            const id = idMatch ? idMatch[0] : null;
-
-            if (!id) return null;
-
-            return {
-                id,
-                title: parts[1] || `Contenido ${id.slice(0, 6)}`,
-                tags: parts[2] ? [parts[2]] : [],
-                cover: parts[3] || null,
-                description: parts[4] || 'Sin descripción disponible.',
-                folderUrl: url
-            };
-        }).filter(Boolean);
 
         const categoryImages = {
             'pelicula': 'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=800&q=80',
@@ -95,7 +119,10 @@ export async function GET() {
                 category: category,
                 description: item.description || 'Sin descripción disponible.',
                 type,
-                original: item.folderUrl || `https://drive.google.com/file/d/${id}/view`,
+                // SECURITY: Force embedded view for folders to prevent users from adding/removing files
+                original: isFolder
+                    ? `https://drive.google.com/embeddedfolderview?id=${id}#grid`
+                    : item.folderUrl || `https://drive.google.com/file/d/${id}/view`,
                 preview: isFolder
                     ? `https://drive.google.com/embeddedfolderview?id=${id}#grid`
                     : `https://drive.google.com/file/d/${id}/preview`,

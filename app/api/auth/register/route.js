@@ -55,6 +55,52 @@ export async function POST(req) {
 
         console.log("User created:", user._id);
 
+        // --- Enviar Correo de Bienvenida ---
+        try {
+            console.log("Configuring email transporter...");
+            const nodemailer = await import('nodemailer');
+            const transporter = nodemailer.createTransport({
+                service: 'gmail', // O configura host/port si usas otro
+                auth: {
+                    user: process.env.EMAIL_USER,
+                    pass: process.env.EMAIL_PASS
+                }
+            });
+
+            const mailOptions = {
+                from: process.env.EMAIL_USER,
+                to: email,
+                subject: '¡Bienvenido a Einflix!',
+                html: `
+                    <div style="font-family: Arial, sans-serif; color: #333;">
+                        <h1 style="color: #E50914;">Bienvenido a Einflix</h1>
+                        <p>Hola <strong>${name}</strong>,</p>
+                        <p>Gracias por registrarte en nuestra plataforma.</p>
+                        <p>Tus credenciales de acceso son:</p>
+                        <ul>
+                            <li><strong>Email:</strong> ${email}</li>
+                            <li><strong>Contraseña:</strong> (La que definiste al registrarte)</li>
+                        </ul>
+                        <p>Disfruta del mejor contenido en streaming.</p>
+                        <br>
+                        <p>Atentamente,<br>El equipo de Einflix</p>
+                    </div>
+                `
+            };
+
+            if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+                console.log("Sending welcome email...");
+                await transporter.sendMail(mailOptions);
+                console.log("Email sent successfully.");
+            } else {
+                console.log("Skipping email: EMAIL_USER or EMAIL_PASS not set in .env");
+            }
+
+        } catch (emailError) {
+            console.error("Error sending email:", emailError);
+            // No fallamos el registro si el correo falla, solo lo logueamos
+        }
+
         return jsonResponse({
             success: true,
             message: "Usuario registrado con éxito",
