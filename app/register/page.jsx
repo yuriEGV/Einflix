@@ -27,7 +27,6 @@ export default function RegisterPage() {
             const data = await res.json();
 
             if (data.success) {
-                // Redirigir al login o login automatico (Future improvement)
                 router.push('/login');
             } else {
                 setError(data.message || 'Error al registrarse');
@@ -40,87 +39,156 @@ export default function RegisterPage() {
     };
 
     return (
-        <div className="login-wrapper">
-            <div className="login-backdrop"></div>
-            <header className="header" style={{ position: 'absolute', background: 'transparent' }}>
+        <div style={{
+            minHeight: '100vh',
+            position: 'relative',
+            backgroundImage: "url('https://images.unsplash.com/photo-1542204172-3f2fea459039?q=80&w=2070&auto=format&fit=crop')",
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            display: 'flex',
+            flexDirection: 'column',
+            fontFamily: "'Outfit', sans-serif"
+        }}>
+            {/* Dark Overlay */}
+            <div style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                background: 'linear-gradient(0deg, #141414 0%, rgba(20, 20, 20, 0.8) 50%, #141414 100%)',
+                zIndex: 1
+            }}></div>
+
+            {/* Header */}
+            <header style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                padding: '20px 40px',
+                zIndex: 10,
+                background: 'transparent'
+            }}>
                 <Link href="/" style={{ textDecoration: 'none' }}>
-                    <h1 style={{ color: '#e50914', fontSize: '2.5rem', fontWeight: 'bold' }}>EINFLIX</h1>
+                    <h1 style={{ color: '#e50914', fontSize: '2.5rem', margin: 0, fontWeight: 'bold' }}>EINFLIX</h1>
                 </Link>
             </header>
 
+            {/* Content Wrapper */}
             <div style={{
+                flex: 1,
                 display: 'flex',
                 justifyContent: 'center',
                 alignItems: 'center',
-                minHeight: '100vh',
                 position: 'relative',
-                zIndex: 1,
-                padding: '20px',
+                zIndex: 2,
+                padding: '100px 20px 40px',
                 gap: '40px',
                 flexWrap: 'wrap'
             }}>
-                {/* Info Panel */}
+                {/* PLAN INFORMATION PANEL - Explicitly visible */}
                 <div style={{
-                    backgroundColor: 'rgba(0,0,0,0.75)',
+                    background: 'rgba(0,0,0,0.85)',
                     padding: '40px',
                     borderRadius: '8px',
                     maxWidth: '500px',
+                    width: '100%',
                     color: 'white',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'center'
+                    border: '1px solid #333',
+                    boxShadow: '0 10px 30px rgba(0,0,0,0.5)'
                 }}>
-                    <h2 style={{ fontSize: '2rem', marginBottom: '20px' }}>Unete a Einflix</h2>
-                    <p style={{ fontSize: '1.2rem', marginBottom: '30px', lineHeight: '1.5' }}>
-                        Crea tu cuenta para acceder a nuestros planes exclusivos. Elige el que mejor se adapte a ti despues de registrarte.
+                    <h2 style={{ fontSize: '2rem', marginBottom: '20px', fontWeight: 'bold', color: '#fff' }}>Elige tu experiencia</h2>
+                    <p style={{ fontSize: '1.1rem', marginBottom: '30px', lineHeight: '1.6', color: '#ccc' }}>
+                        Al registrarte, podrás acceder a nuestro contenido exclusivo. Una vez dentro, <strong>selecciona tu plan</strong> en la sección de pago:
                     </p>
 
-                    <div style={{ marginBottom: '20px' }}>
-                        <h3 style={{ borderBottom: '1px solid #333', paddingBottom: '10px' }}>Nuestros Planes:</h3>
-                        <ul style={{ listStyle: 'none', padding: 0, marginTop: '20px' }}>
-                            <li style={{ marginBottom: '15px' }}>
-                                <strong style={{ color: '#E50914' }}>Básico ($1.000)</strong>
-                                <span style={{ display: 'block', color: '#ccc', fontSize: '0.9rem' }}>Acceso a libros y revistas.</span>
+                    <div>
+                        <ul style={{ listStyle: 'none', padding: 0 }}>
+                            <li style={{ marginBottom: '20px', paddingBottom: '15px', borderBottom: '1px solid #333' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
+                                    <strong style={{ color: '#fff', fontSize: '1.2rem' }}>Plan Básico</strong>
+                                    <span style={{ color: '#E50914', fontWeight: 'bold', fontSize: '1.2rem' }}>$1.000</span>
+                                </div>
+                                <span style={{ color: '#999', fontSize: '0.9rem' }}>• Acceso a Libros y Revistas.</span>
                             </li>
-                            <li style={{ marginBottom: '15px' }}>
-                                <strong style={{ color: '#E50914' }}>Medium ($2.500)</strong>
-                                <span style={{ display: 'block', color: '#ccc', fontSize: '0.9rem' }}>Películas y Series HD.</span>
+                            <li style={{ marginBottom: '20px', paddingBottom: '15px', borderBottom: '1px solid #333' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
+                                    <strong style={{ color: '#fff', fontSize: '1.2rem' }}>Plan Medium</strong>
+                                    <span style={{ color: '#E50914', fontWeight: 'bold', fontSize: '1.2rem' }}>$2.500</span>
+                                </div>
+                                <span style={{ color: '#999', fontSize: '0.9rem' }}>• Películas + Series HD.<br />• Sin publicidad.</span>
                             </li>
                             <li>
-                                <strong style={{ color: '#E50914' }}>Total ($3.000)</strong>
-                                <span style={{ display: 'block', color: '#ccc', fontSize: '0.9rem' }}>Todo incluido + 4K.</span>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
+                                    <strong style={{ color: '#fff', fontSize: '1.2rem' }}>Plan Total</strong>
+                                    <span style={{ color: '#E50914', fontWeight: 'bold', fontSize: '1.2rem' }}>$3.000</span>
+                                </div>
+                                <span style={{ color: '#999', fontSize: '0.9rem' }}>• Todo incluido (4K).<br />• Música + Karaoke + Descargas.</span>
                             </li>
                         </ul>
                     </div>
                 </div>
 
-                {/* Form Panel */}
-                <div className="login-container" style={{ margin: 0 }}>
-                    <form className="login-form" onSubmit={handleSubmit}>
-                        <h2>Registrarse</h2>
-                        {error && <div className="error-message">{error}</div>}
+                {/* REGISTRATION FORM */}
+                <div style={{
+                    background: 'rgba(0,0,0,0.75)',
+                    padding: '40px',
+                    borderRadius: '8px',
+                    maxWidth: '450px',
+                    width: '100%',
+                    minWidth: '300px'
+                }}>
+                    <form onSubmit={handleSubmit}>
+                        <h2 style={{ fontSize: '2rem', marginBottom: '28px', color: 'white', fontWeight: 'bold' }}>Crear Cuenta</h2>
+                        {error && <div style={{
+                            backgroundColor: '#e87c03',
+                            color: 'white',
+                            padding: '10px 15px',
+                            borderRadius: '4px',
+                            marginBottom: '20px',
+                            fontSize: '0.9rem'
+                        }}>{error}</div>}
 
-                        <div className="input-group">
+                        <div style={{ marginBottom: '16px' }}>
                             <input
                                 type="text"
                                 placeholder="Nombre completo"
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
                                 required
+                                style={{
+                                    width: '100%',
+                                    padding: '16px 20px',
+                                    borderRadius: '4px',
+                                    border: 'none',
+                                    backgroundColor: '#333',
+                                    color: 'white',
+                                    fontSize: '1rem'
+                                }}
                             />
                         </div>
 
-                        <div className="input-group">
+                        <div style={{ marginBottom: '16px' }}>
                             <input
                                 type="email"
                                 placeholder="Correo electrónico"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 required
+                                style={{
+                                    width: '100%',
+                                    padding: '16px 20px',
+                                    borderRadius: '4px',
+                                    border: 'none',
+                                    backgroundColor: '#333',
+                                    color: 'white',
+                                    fontSize: '1rem'
+                                }}
                             />
                         </div>
 
-                        <div className="input-group">
+                        <div style={{ marginBottom: '20px' }}>
                             <input
                                 type="password"
                                 placeholder="Contraseña (mín. 6 caracteres)"
@@ -128,15 +196,35 @@ export default function RegisterPage() {
                                 onChange={(e) => setPassword(e.target.value)}
                                 minLength={6}
                                 required
+                                style={{
+                                    width: '100%',
+                                    padding: '16px 20px',
+                                    borderRadius: '4px',
+                                    border: 'none',
+                                    backgroundColor: '#333',
+                                    color: 'white',
+                                    fontSize: '1rem'
+                                }}
                             />
                         </div>
 
-                        <button type="submit" className="login-btn" disabled={loading}>
-                            {loading ? 'Creando cuenta...' : 'Continuar al Pago'}
+                        <button type="submit" disabled={loading} style={{
+                            width: '100%',
+                            padding: '16px',
+                            backgroundColor: '#e50914',
+                            color: 'white',
+                            fontSize: '1rem',
+                            fontWeight: '700',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            opacity: loading ? 0.7 : 1
+                        }}>
+                            {loading ? 'Procesando...' : 'Registrarse y Elegir Plan'}
                         </button>
 
-                        <div className="login-footer">
-                            <span>¿Ya tienes cuenta? <Link href="/login" style={{ color: 'white', fontWeight: 'bold' }}>Inicia sesión</Link></span>
+                        <div style={{ marginTop: '20px', color: '#737373', fontSize: '0.9rem' }}>
+                            <span>¿Ya tienes cuenta? <Link href="/login" style={{ color: 'white', fontWeight: 'bold', textDecoration: 'none' }}> Inicia sesión</Link></span>
                         </div>
                     </form>
                 </div>
