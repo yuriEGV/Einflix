@@ -22,20 +22,9 @@ export default function PaymentPage() {
 
             const data = await res.json();
 
-            if (data.token && data.url) {
-                // Crear un formulario temporal para redirigir a Webpay
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.action = data.url;
-
-                const tokenInput = document.createElement('input');
-                tokenInput.type = 'hidden';
-                tokenInput.name = 'token_ws';
-                tokenInput.value = data.token;
-
-                form.appendChild(tokenInput);
-                document.body.appendChild(form);
-                form.submit();
+            if (data.init_point) {
+                // Mercado Pago redirección directa al Checkout Pro
+                window.location.href = data.init_point;
             } else {
                 setError('No se pudo iniciar el pago. Revisa la consola.');
             }
@@ -78,8 +67,8 @@ export default function PaymentPage() {
                         disabled={loading}
                         style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
                     >
-                        {loading ? 'Redirigiendo...' : 'Pagar con Webpay'}
-                        {!loading && <img src="https://static.transbank.cl/content/dam/transbank/images/header/Logo-Transbank.svg" alt="TBK" style={{ height: '20px' }} />}
+                        {loading ? 'Redirigiendo...' : 'Pagar con Mercado Pago'}
+                        {!loading && <img src="https://http2.mlstatic.com/frontend-assets/sdk/mercadopago-lib/1.1.0/mercadopago/logo-main.svg" alt="MP" style={{ height: '20px' }} />}
                     </button>
 
                     <div className="login-footer" style={{ marginTop: '20px' }}>

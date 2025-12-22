@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
     try {
         const possiblePaths = [
@@ -23,28 +25,25 @@ export async function GET() {
         }
 
         const content = fs.readFileSync(filePath, 'utf8');
+        const lines = content.split('\n').filter(line => line.trim());
 
-        // El archivo contiene objetos JSON separados por comas y saltos de línea.
-        // Lo convertimos en un array válido para parsear.
-        let jsonContent = content.trim();
-        if (!jsonContent.startsWith('[')) {
-            // Eliminar posibles espacios/comas al final y envolver en corchetes
-            jsonContent = '[' + jsonContent.replace(/,$/, '') + ']';
-        }
+        let rawItems = lines.map(line => {
+            const parts = line.split('|').map(p => p.trim());
+            const url = parts[0] || '';
+            const idMatch = url.match(/[-\w]{25,}/);
+            const id = idMatch ? idMatch[0] : null;
 
-        let rawItems = [];
-        try {
-            rawItems = JSON.parse(jsonContent);
-        } catch (e) {
-            console.error("Error parseando drive_links.txt como JSON:", e.message);
-            // Fallback: Si el JSON falla, intentar extraer objetos con regex (más lento pero robusto)
-            const matches = content.match(/\{[\s\S]*?\}/g);
-            if (matches) {
-                rawItems = matches.map(m => {
-                    try { return JSON.parse(m); } catch { return null; }
-                }).filter(Boolean);
-            }
-        }
+            if (!id) return null;
+
+            return {
+                id,
+                title: parts[1] || `Contenido ${id.slice(0, 6)}`,
+                tags: parts[2] ? [parts[2]] : [],
+                cover: parts[3] || null,
+                description: parts[4] || 'Sin descripción disponible.',
+                folderUrl: url
+            };
+        }).filter(Boolean);
 
         const categoryImages = {
             'pelicula': 'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=800&q=80',

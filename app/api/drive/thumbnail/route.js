@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req) {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');

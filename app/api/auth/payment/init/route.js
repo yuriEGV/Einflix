@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server';
-import dbConnect from '../../../../lib/mongodb';
-import User from '../../../../models/User';
+import dbConnect from '@/lib/mongodb';
+import User from '@/models/User';
 import mercadopago from 'mercadopago';
 import { jwtVerify } from 'jose';
+
+export const dynamic = 'force-dynamic';
 
 const SECRET_KEY = process.env.JWT_SECRET || 'einflix_super_secret_key_2024';
 

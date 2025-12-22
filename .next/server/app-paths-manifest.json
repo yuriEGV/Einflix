@@ -1,5 +1,17 @@
 {
   "/_not-found": "app/_not-found.js",
+  "/api/auth/forgot-password/route": "app/api/auth/forgot-password/route.js",
+  "/api/auth/logout/route": "app/api/auth/logout/route.js",
+  "/api/auth/login/route": "app/api/auth/login/route.js",
+  "/api/auth/register/route": "app/api/auth/register/route.js",
   "/api/gallery/route": "app/api/gallery/route.js",
-  "/gallery/page": "app/gallery/page.js"
+  "/forgot-password/page": "app/forgot-password/page.js",
+  "/gallery/page": "app/gallery/page.js",
+  "/payment/page": "app/payment/page.js",
+  "/register/page": "app/register/page.js",
+  "/login/page": "app/login/page.js",
+  "/api/auth/payment/callback/route": "app/api/auth/payment/callback/route.js",
+  "/api/auth/payment/init/route": "app/api/auth/payment/init/route.js",
+  "/api/drive/thumbnail/route": "app/api/drive/thumbnail/route.js",
+  "/api/drive/catalogo/route": "app/api/drive/catalogo/route.js"
 }
