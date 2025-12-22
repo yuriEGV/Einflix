@@ -60,7 +60,7 @@ export async function POST(req) {
 
         return jsonResponse({
             id: response.body.id,
-            init_point: response.body.init_point
+            init_point: response.body.sandbox_init_point || response.body.init_point
         });
     } catch (error) {
         console.error('Error Mercado Pago:', error);

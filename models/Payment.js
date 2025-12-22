@@ -7,11 +7,13 @@ const PaymentSchema = new mongoose.Schema({
         required: true
     },
     externalReference: String,
+    paymentId: { type: String, unique: true }, // MP Payment ID
     amount: Number,
     currency: {
         type: String,
         default: 'CLP'
     },
+    paymentMethod: String, // visa, mastercard, etc.
     planType: {
         type: String,
         enum: ['total', 'medium', 'basic'],

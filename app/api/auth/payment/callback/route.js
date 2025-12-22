@@ -5,6 +5,11 @@ import Payment from '@/models/Payment';
 
 export const dynamic = 'force-dynamic';
 
+import mercadopago from 'mercadopago';
+
+// Configurar SDK de Mercado Pago
+mercadopago.configurations.setAccessToken(process.env.MP_ACCESS_TOKEN || 'TEST-3392348560888206-122208-144d15655c654f164624446345839444-12345678');
+
 export async function GET(req) {
     try {
         await dbConnect();
@@ -12,9 +17,26 @@ export async function GET(req) {
 
         const status = searchParams.get('status');
         const externalRef = searchParams.get('external_reference'); // userId|planType|duration
+        const paymentId = searchParams.get('payment_id') || searchParams.get('collection_id');
 
-        if (status === 'approved' && externalRef) {
+        if ((status === 'approved' || status === 'success') && externalRef) {
             const [userId, planType, duration] = externalRef.split('|');
+
+            // Fetch payment details from Mercado Pago
+            let paidAmount = 0;
+            let paymentMethod = 'unknown';
+
+            if (paymentId) {
+                try {
+                    const mpRes = await mercadopago.payment.findById(Number(paymentId));
+                    if (mpRes && mpRes.body) {
+                        paidAmount = mpRes.body.transaction_amount;
+                        paymentMethod = mpRes.body.payment_method_id;
+                    }
+                } catch (mpError) {
+                    console.error("Error fetching MP payment:", mpError);
+                }
+            }
 
             // Calcular expiración
             let expiryDate = new Date();
@@ -31,14 +53,16 @@ export async function GET(req) {
                 subscriptionExpiry: expiryDate
             });
 
-            // Registrar pago
+            // Registrar pago con datos reales
             await Payment.create({
                 userId,
                 externalReference: externalRef,
-                amount: 0, // MP no devuelve monto fácil en callback sin consultar API, omitimos por ahora o ponemos 0
+                paymentId: paymentId || `manual_${Date.now()}`,
+                amount: paidAmount,
+                paymentMethod: paymentMethod,
                 planType: planType || 'basic',
                 duration: duration || 'monthly',
-                status: 'approved'
+                status: status
             });
 
             return Response.redirect(new URL('/gallery?payment=success', req.url));

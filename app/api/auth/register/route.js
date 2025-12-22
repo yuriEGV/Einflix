@@ -25,8 +25,8 @@ export async function POST(req) {
             throw new Error("Invalid XML/JSON body");
         }
 
-        const { name, email, password } = body;
-        console.log("Registering:", email);
+        const { name, email, password, planType } = body;
+        console.log("Registering:", email, "Plan:", planType);
 
         // Verificar si el usuario ya existe
         const userExists = await User.findOne({ email: email.toLowerCase() });
@@ -51,6 +51,7 @@ export async function POST(req) {
             name,
             email,
             password: hashedPassword,
+            planType: planType || 'basic' // Save the selected plan (or default)
         });
 
         console.log("User created:", user._id);

@@ -8,6 +8,7 @@ export default function RegisterPage() {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [planType, setPlanType] = useState('basic');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const router = useRouter();
@@ -21,7 +22,7 @@ export default function RegisterPage() {
             const res = await fetch('/api/auth/register', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, email, password }),
+                body: JSON.stringify({ name, email, password, planType }),
             });
 
             const data = await res.json();
@@ -206,6 +207,19 @@ export default function RegisterPage() {
                                     fontSize: '1rem'
                                 }}
                             />
+                        </div>
+
+                        <div style={{ marginBottom: '20px' }}>
+                            <label style={{ display: 'block', marginBottom: '8px', color: '#ccc' }}>Selecciona tu Plan:</label>
+                            <select
+                                value={planType}
+                                onChange={(e) => setPlanType(e.target.value)}
+                                style={{ width: '100%', padding: '16px 20px', borderRadius: '4px', border: 'none', backgroundColor: '#333', color: 'white', fontSize: '1rem', cursor: 'pointer' }}
+                            >
+                                <option value="basic">Plan Básico ($1.000)</option>
+                                <option value="medium">Plan Medium ($2.500)</option>
+                                <option value="total">Plan Total ($3.000)</option>
+                            </select>
                         </div>
 
                         <button type="submit" disabled={loading} style={{

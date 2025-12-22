@@ -31,9 +31,27 @@ export async function GET(req) {
                 const dbConnect = (await import('@/lib/mongodb')).default;
                 await dbConnect();
 
-                const user = await User.findById(payload.id);
-                if (user && user.isPaid) {
-                    planType = user.planType || 'basic';
+                // Validate payload.id format
+                if (payload.id && typeof payload.id === 'string' && payload.id.match(/^[0-9a-fA-F]{24}$/)) {
+                    const user = await User.findById(payload.id);
+                    if (user) {
+                        // Debug Log
+                        console.log(`CATALOG CHECK: User Found: ${user.email}, Plan: ${user.planType}, Paid: ${user.isPaid}`);
+                        // Only allow access if user is paid OR if we want to allow access to basic plan even if isPaid is false (as a trial? No, user strict)
+                        // Wait, if register sets plan but isPaid is false (default), they see nothing?
+                        // User said "register and select plan", but didn't pay yet?
+                        // If "isPaid" is false, we might want to show at least "libros" if plan is basic?
+                        // For now, adhere to isPaid check.
+                        if (user.isPaid) {
+                            planType = user.planType || 'basic';
+                        } else {
+                            console.log(`CATALOG CHECK: User ${user.email} IS NOT PAID.`);
+                        }
+                    } else {
+                        console.log("CATALOG CHECK: User not found in DB");
+                    }
+                } else {
+                    console.error("Invalid ID in token payload:", payload.id);
                 }
             } catch (e) {
                 console.error("Token verification failed in catalog:", e);
@@ -43,11 +61,9 @@ export async function GET(req) {
         const dataDir = path.join(process.cwd(), 'data');
         let allowedFiles = [];
 
-        // 2. Definir acceso por Plan
-        // Total: Todo
-        // Medium: Peliculas + Series
-        // Basic: Libros
+        console.log(`CATALOG FILTER: Effective Plan: ${planType}`);
 
+        // 2. Definir acceso por Plan
         if (planType === 'total') {
             allowedFiles = ['peliculas.txt', 'series.txt', 'comics.txt', 'musica.txt', 'karaoke.txt', 'libros.txt', 'otros.txt'];
         } else if (planType === 'medium') {
@@ -55,11 +71,10 @@ export async function GET(req) {
         } else if (planType === 'basic') {
             allowedFiles = ['libros.txt'];
         } else {
-            // Usuario no pagado o sin plan: mostrar nada o demo?
-            // User requested plans filter content, so un-paid gets nothing or just "otros"?
-            // Let's return empty or public content if exists.
             allowedFiles = [];
         }
+
+        console.log(`CATALOG FILTER: Allowed Files: ${JSON.stringify(allowedFiles)}`);
 
         const fileCategories = {
             'peliculas.txt': 'Película',

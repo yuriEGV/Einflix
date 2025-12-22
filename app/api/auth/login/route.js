@@ -39,7 +39,7 @@ export async function POST(req) {
 
             const token = await new SignJWT({
                 email: user.email,
-                id: user._id,
+                id: user._id.toString(), // Ensure string string for JWT
                 name: user.name,
                 isPaid: user.isPaid || false
             })
