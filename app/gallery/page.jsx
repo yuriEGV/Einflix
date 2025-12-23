@@ -148,6 +148,7 @@ export default function GalleryPage() {
                                 title={active.title}
                                 allow="autoplay; fullscreen"
                                 allowFullScreen
+                                sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"
                             />
                         </div>
 
