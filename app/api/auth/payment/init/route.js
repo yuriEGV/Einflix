@@ -80,12 +80,27 @@ export async function POST(req) {
 
         console.log("MP Response Status:", response.status);
 
-        return jsonResponse({
-            id: response.body.id,
-            init_point: response.body.sandbox_init_point || response.body.init_point
-        });
+        if (response.body) {
+            console.log("MP Body ID:", response.body.id);
+            console.log("MP Init Point:", response.body.init_point);
+        }
+
+        const resData = {
+            id: response.body?.id,
+            init_point: response.body?.sandbox_init_point || response.body?.init_point
+        };
+
+        // Restaurar notification_url para webhooks (MP lo permite si es HTTPS o NEXT_PUBLIC_VAL)
+        if (!host.includes('localhost') || process.env.NEXT_PUBLIC_APP_URL) {
+            preference.notification_url = `${process.env.NEXT_PUBLIC_APP_URL || publicUrl}/api/auth/payment/webhook`;
+            console.log("Webhook enabled:", preference.notification_url);
+        }
+
+        console.log("API sending back:", JSON.stringify(resData));
+
+        return jsonResponse(resData);
     } catch (error) {
-        console.error('Error Mercado Pago:', error);
-        return jsonResponse({ error: 'Error al iniciar pago: ' + error.message }, 500);
+        console.error('Error FATAL en init:', error);
+        return jsonResponse({ error: 'Error al iniciar pago: ' + error.message, stack: error.stack }, 500);
     }
 }
