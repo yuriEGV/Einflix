@@ -15,10 +15,10 @@ export default function LandingPage() {
                 width: '100%',
                 zIndex: 10
             }}>
-                <h1 style={{ color: '#E50914', fontSize: '2.5rem', margin: 0, fontWeight: 'bold' }}>EINFLIX</h1>
+                <h1 style={{ color: '#D4AF37', fontSize: '3.5rem', margin: 0, fontWeight: 'bold', fontFamily: "'Cinzel', serif", letterSpacing: '2px' }}>EINFLIX</h1>
                 <div>
                     <Link href="/login" style={{
-                        backgroundColor: '#E50914',
+                        backgroundColor: '#D4AF37',
                         color: '#fff',
                         padding: '7px 17px',
                         textDecoration: 'none',
@@ -52,7 +52,7 @@ export default function LandingPage() {
                 </p>
                 <Link href="/register">
                     <button style={{
-                        backgroundColor: '#E50914',
+                        backgroundColor: '#D4AF37',
                         color: 'white',
                         border: 'none',
                         padding: '15px 30px',
@@ -123,7 +123,7 @@ function PlanCard({ title, price, period, features, isFeatured }) {
     return (
         <div style={{
             backgroundColor: isFeatured ? '#222' : '#111',
-            border: isFeatured ? '2px solid #E50914' : '1px solid #333',
+            border: isFeatured ? '2px solid #D4AF37' : '1px solid #333',
             borderRadius: '10px',
             padding: '30px',
             flex: '1 1 300px',
@@ -135,7 +135,7 @@ function PlanCard({ title, price, period, features, isFeatured }) {
         }}>
             {isFeatured && (
                 <span style={{
-                    backgroundColor: '#E50914',
+                    backgroundColor: '#D4AF37',
                     color: 'white',
                     position: 'absolute',
                     top: '-15px',
@@ -165,7 +165,7 @@ function PlanCard({ title, price, period, features, isFeatured }) {
                         display: 'flex',
                         alignItems: 'center'
                     }}>
-                        <span style={{ color: '#E50914', marginRight: '10px', fontSize: '1.2rem' }}>✓</span>
+                        <span style={{ color: '#D4AF37', marginRight: '10px', fontSize: '1.2rem' }}>✓</span>
                         {feat}
                     </li>
                 ))}
@@ -175,7 +175,7 @@ function PlanCard({ title, price, period, features, isFeatured }) {
                 <button style={{
                     width: '100%',
                     padding: '15px',
-                    backgroundColor: isFeatured ? '#E50914' : '#fff',
+                    backgroundColor: isFeatured ? '#D4AF37' : '#fff',
                     color: isFeatured ? '#fff' : '#000',
                     border: 'none',
                     borderRadius: '4px',

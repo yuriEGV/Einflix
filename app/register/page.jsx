@@ -74,7 +74,7 @@ export default function RegisterPage() {
                 background: 'transparent'
             }}>
                 <Link href="/" style={{ textDecoration: 'none' }}>
-                    <h1 style={{ color: '#e50914', fontSize: '2.5rem', margin: 0, fontWeight: 'bold' }}>EINFLIX</h1>
+                    <h1 style={{ color: '#D4AF37', fontSize: '3.5rem', margin: 0, fontWeight: 'bold', fontFamily: "'Cinzel', serif", letterSpacing: '2px' }}>EINFLIX</h1>
                 </Link>
             </header>
 
@@ -111,21 +111,21 @@ export default function RegisterPage() {
                             <li style={{ marginBottom: '20px', paddingBottom: '15px', borderBottom: '1px solid #333' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
                                     <strong style={{ color: '#fff', fontSize: '1.2rem' }}>Plan Básico</strong>
-                                    <span style={{ color: '#E50914', fontWeight: 'bold', fontSize: '1.2rem' }}>$1.000</span>
+                                    <span style={{ color: '#D4AF37', fontWeight: 'bold', fontSize: '1.2rem' }}>$1.000</span>
                                 </div>
                                 <span style={{ color: '#999', fontSize: '0.9rem' }}>• Acceso a Libros y Revistas.</span>
                             </li>
                             <li style={{ marginBottom: '20px', paddingBottom: '15px', borderBottom: '1px solid #333' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
                                     <strong style={{ color: '#fff', fontSize: '1.2rem' }}>Plan Medium</strong>
-                                    <span style={{ color: '#E50914', fontWeight: 'bold', fontSize: '1.2rem' }}>$2.500</span>
+                                    <span style={{ color: '#D4AF37', fontWeight: 'bold', fontSize: '1.2rem' }}>$2.500</span>
                                 </div>
                                 <span style={{ color: '#999', fontSize: '0.9rem' }}>• Películas + Series HD.<br />• Sin publicidad.</span>
                             </li>
                             <li>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
                                     <strong style={{ color: '#fff', fontSize: '1.2rem' }}>Plan Total</strong>
-                                    <span style={{ color: '#E50914', fontWeight: 'bold', fontSize: '1.2rem' }}>$3.000</span>
+                                    <span style={{ color: '#D4AF37', fontWeight: 'bold', fontSize: '1.2rem' }}>$3.000</span>
                                 </div>
                                 <span style={{ color: '#999', fontSize: '0.9rem' }}>• Todo incluido (4K).<br />• Música + Karaoke + Descargas.</span>
                             </li>
@@ -227,7 +227,7 @@ export default function RegisterPage() {
                         <button type="submit" disabled={loading} style={{
                             width: '100%',
                             padding: '16px',
-                            backgroundColor: '#e50914',
+                            backgroundColor: '#D4AF37',
                             color: 'white',
                             fontSize: '1rem',
                             fontWeight: '700',

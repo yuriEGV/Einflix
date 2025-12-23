@@ -41,7 +41,7 @@ export default function ForgotPasswordPage() {
             <div className="login-backdrop"></div>
             <header className="header" style={{ position: 'absolute', background: 'transparent' }}>
                 <Link href="/" style={{ textDecoration: 'none' }}>
-                    <h1 style={{ color: '#e50914', fontSize: '2.5rem', fontWeight: 'bold' }}>EINFLIX</h1>
+                    <h1 style={{ color: '#D4AF37', fontSize: '3.5rem', fontWeight: 'bold', fontFamily: "'Cinzel', serif", letterSpacing: '2px' }}>EINFLIX</h1>
                 </Link>
             </header>
 

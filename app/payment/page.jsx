@@ -72,7 +72,7 @@ export default function PaymentPage() {
         <div className="login-wrapper">
             <div className="login-backdrop"></div>
             <header className="header" style={{ position: 'absolute', background: 'transparent', zIndex: 10 }}>
-                <h1 style={{ color: '#e50914', fontSize: '2.5rem', fontWeight: 'bold' }}>EINFLIX</h1>
+                <h1 style={{ color: '#D4AF37', fontSize: '3.5rem', fontWeight: 'bold', fontFamily: "'Cinzel', serif", letterSpacing: '2px' }}>EINFLIX</h1>
             </header>
 
             <div className="login-container" style={{ textAlign: 'center', maxWidth: '1000px', width: '95%', padding: '40px 20px' }}>
@@ -103,7 +103,7 @@ export default function PaymentPage() {
                     {plans.map((plan) => (
                         <div key={plan.id} style={{
                             backgroundColor: plan.recommended ? 'rgba(229, 9, 20, 0.1)' : 'rgba(0,0,0,0.7)',
-                            border: plan.recommended ? '2px solid #e50914' : '1px solid #333',
+                            border: plan.recommended ? '2px solid #D4AF37' : '1px solid #333',
                             borderRadius: '8px',
                             padding: '30px',
                             flex: '1 1 280px',
@@ -111,7 +111,7 @@ export default function PaymentPage() {
                             display: 'flex',
                             flexDirection: 'column'
                         }}>
-                            {plan.recommended && <span style={{ color: '#e50914', fontWeight: 'bold', marginBottom: '10px', display: 'block' }}>RECOMENDADO</span>}
+                            {plan.recommended && <span style={{ color: '#D4AF37', fontWeight: 'bold', marginBottom: '10px', display: 'block' }}>RECOMENDADO</span>}
                             <h3 style={{ fontSize: '1.5rem', marginBottom: '10px' }}>{plan.name}</h3>
                             <p style={{ color: '#aaa', minHeight: '40px' }}>{plan.desc}</p>
 
@@ -125,7 +125,7 @@ export default function PaymentPage() {
                             <ul style={{ listStyle: 'none', padding: 0, marginBottom: '30px', textAlign: 'left', flexGrow: 1 }}>
                                 {plan.features.map((feat, i) => (
                                     <li key={i} style={{ marginBottom: '10px', display: 'flex', alignItems: 'center' }}>
-                                        <span style={{ color: '#e50914', marginRight: '10px' }}>✓</span> {feat}
+                                        <span style={{ color: '#D4AF37', marginRight: '10px' }}>✓</span> {feat}
                                     </li>
                                 ))}
                             </ul>
