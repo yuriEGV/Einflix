@@ -33,7 +33,7 @@ export default function LandingPage() {
 
             {/* Hero Section */}
             <div style={{
-                backgroundImage: 'linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.8)), url("https://assets.nflxext.com/ffe/siteui/vlv3/d1532433-07b1-4e39-a920-0f08b81a489e/67033404-2df2-418b-87e7-6965478d5a1d/CL-es-20231120-popsignuptwoweeks-perspective_alpha_website_large.jpg")',
+                backgroundImage: 'linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.8)), url("/landing-bg.png")',
                 height: '70vh',
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',

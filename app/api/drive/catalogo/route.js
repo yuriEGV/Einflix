@@ -140,7 +140,7 @@ export async function GET(req) {
             'premium': 'https://images.unsplash.com/photo-1550745165-9bc0b25272a7?w=800&q=80',
             'biblioteca': 'https://images.unsplash.com/photo-1507014498014-97050e8902f2?w=800&q=80',
             'galería': 'https://images.unsplash.com/photo-1492037766660-2a56f9eb3fcb?w=800&q=80',
-            'einflix': 'https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?w=800&q=80'
+            'einflix': 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=800&q=80'
         };
 
         // Procesar y mapear los items

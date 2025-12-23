@@ -46,15 +46,27 @@ export default function GalleryPage() {
         try {
             const res = await fetch(`/api/drive/list?id=${folder.id}`)
             const data = await res.json()
-            if (data.error) throw new Error(data.error)
 
-            setFolderContent(data)
-            setHistory(prev => [...prev, { id: folder.id, title: folder.title }])
-            if (!active || active.id !== folder.id) {
-                setActive(folder)
+            if (data.error) {
+                if (data.error === 'config_missing') {
+                    // FALLBACK: If API key is missing, we use the protected Iframe
+                    console.warn("Using Iframe fallback due to missing API Key");
+                    setFolderContent([])
+                    setActive({ ...folder, type: 'folder_fallback' })
+                } else {
+                    throw new Error(data.error)
+                }
+            } else {
+                setFolderContent(data)
+                setHistory(prev => [...prev, { id: folder.id, title: folder.title }])
+                if (!active || active.id !== folder.id) {
+                    setActive(folder)
+                }
             }
         } catch (e) {
             console.error("Error loading folder:", e)
+            // Error fallback
+            setActive({ ...folder, type: 'folder_fallback' })
         } finally {
             setFolderLoading(false)
         }
@@ -123,7 +135,7 @@ export default function GalleryPage() {
                         crossOrigin="anonymous"
                         onError={(e) => {
                             e.target.onerror = null;
-                            e.target.src = 'https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?q=80&w=1600&auto=format&fit=crop';
+                            e.target.src = 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=1600&auto=format&fit=crop';
                             e.target.style.opacity = '0.5';
                         }}
                         style={{ width: '100%', height: '100%', objectFit: 'cover' }}
@@ -179,7 +191,7 @@ export default function GalleryPage() {
                     <div className="inner" onClick={(e) => e.stopPropagation()}>
                         <button className="close-btn" onClick={() => setActive(null)}>✕</button>
 
-                        <div className={`video-container ${active.type === 'folder' ? 'folder-mode' : ''}`}>
+                        <div className={`video-container ${(active.type === 'folder' || active.type === 'folder_fallback') ? 'folder-mode' : ''}`}>
                             {active.type === 'folder' ? (
                                 <div className="native-explorer">
                                     <div className="explorer-header">
@@ -206,11 +218,13 @@ export default function GalleryPage() {
                                 </div>
                             ) : (
                                 <iframe
-                                    src={active.preview}
+                                    src={active.type === 'folder_fallback'
+                                        ? `https://drive.google.com/embeddedfolderview?id=${active.id}#grid`
+                                        : active.preview}
                                     title={active.title}
                                     allow="autoplay; fullscreen"
                                     allowFullScreen
-                                    sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"
+                                    sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-presentation allow-storage-access-by-user-activation"
                                 />
                             )}
                         </div>

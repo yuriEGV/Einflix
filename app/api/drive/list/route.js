@@ -12,7 +12,13 @@ export async function GET(req) {
     if (!apiKey) {
         // Fallback or error if no API Key is provided
         console.warn("GOOGLE_API_KEY is missing. Native explorer will not work.");
-        return new Response(JSON.stringify({ error: 'Server configuration error: Missing API Key' }), { status: 500 });
+        return new Response(JSON.stringify({
+            error: 'config_missing',
+            message: 'GOOGLE_API_KEY is missing. Please add it to your .env file.'
+        }), {
+            status: 403,
+            headers: { 'Content-Type': 'application/json' }
+        });
     }
 
     try {
