@@ -43,11 +43,7 @@ export default function GalleryPage() {
     const featuredItem = items[0]
 
     const handleItemClick = (it) => {
-        if (it.type === 'folder') {
-            window.open(it.original, '_blank')
-        } else {
-            setActive(it)
-        }
+        setActive(it)
     }
 
     const handleLogout = async () => {
@@ -146,7 +142,7 @@ export default function GalleryPage() {
                     <div className="inner" onClick={(e) => e.stopPropagation()}>
                         <button className="close-btn" onClick={() => setActive(null)}>✕</button>
 
-                        <div className="video-container">
+                        <div className={`video-container ${active.type === 'folder' ? 'folder-mode' : ''}`}>
                             <iframe
                                 src={active.preview}
                                 title={active.title}
@@ -160,11 +156,22 @@ export default function GalleryPage() {
                             <div className="modal-meta">
                                 <span style={{ color: '#46d369', fontWeight: 700 }}>98% de coincidencia</span>
                                 <span>2024</span>
-                                <span style={{ border: '1px solid #777', padding: '0 4px', fontSize: '0.8rem' }}>HD</span>
+                                <span style={{ border: '1px solid #777', padding: '0 4px', fontSize: '0.8rem' }}>
+                                    {active.type === 'folder' ? 'COLECCIÓN' : 'HD'}
+                                </span>
                             </div>
                             <p style={{ lineHeight: 1.5, fontSize: '1.1rem' }}>
-                                {active.description}
+                                {active.description || (active.type === 'folder'
+                                    ? 'Explora el contenido de esta colección directamente desde Einflix.'
+                                    : 'Disfruta de la mejor calidad de reproducción.')}
                             </p>
+                            {active.type === 'folder' && (
+                                <div style={{ marginTop: '20px', padding: '15px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '8px' }}>
+                                    <p style={{ fontSize: '0.9rem', color: '#aaa', margin: 0 }}>
+                                        <span style={{ color: 'var(--netflix-red)' }}>TIP:</span> Navega por los archivos arriba y haz clic para verlos.
+                                    </p>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

@@ -121,7 +121,9 @@ export const getCatalogo = (req, res) => {
         category: category,
         description: item.description || 'Sin descripción disponible.',
         type,
-        original: item.folderUrl || `https://drive.google.com/file/d/${id}/view`,
+        original: isFolder
+          ? `https://drive.google.com/embeddedfolderview?id=${id}#grid`
+          : item.folderUrl || `https://drive.google.com/file/d/${id}/view`,
         preview: isFolder
           ? `https://drive.google.com/embeddedfolderview?id=${id}#grid`
           : `https://drive.google.com/file/d/${id}/preview`,
