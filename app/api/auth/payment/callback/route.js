@@ -9,7 +9,9 @@ import mercadopago from 'mercadopago';
 
 // Configurar SDK de Mercado Pago
 // Configurar SDK de Mercado Pago
-mercadopago.configurations.setAccessToken(process.env.MP_ACCESS_TOKEN);
+mercadopago.configure({
+    access_token: (process.env.MP_ACCESS_TOKEN || '').trim()
+});
 
 export async function GET(req) {
     try {

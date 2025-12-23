@@ -7,7 +7,9 @@ export const dynamic = 'force-dynamic';
 
 // Configurar SDK de Mercado Pago
 // Configurar SDK de Mercado Pago
-mercadopago.configurations.setAccessToken(process.env.MP_ACCESS_TOKEN);
+mercadopago.configure({
+    access_token: (process.env.MP_ACCESS_TOKEN || '').trim()
+});
 
 export async function POST(req) {
     try {

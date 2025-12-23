@@ -9,9 +9,11 @@ const SECRET_KEY = process.env.JWT_SECRET || 'einflix_super_secret_key_2024';
 
 // Configurar SDK de Mercado Pago
 // Configurar SDK de Mercado Pago
-const mpAccessToken = process.env.MP_ACCESS_TOKEN;
-console.log("MP Init Token:", mpAccessToken ? `${mpAccessToken.substring(0, 10)}...` : "MISSING");
-mercadopago.configurations.setAccessToken(mpAccessToken);
+const mpAccessToken = (process.env.MP_ACCESS_TOKEN || '').trim();
+console.log("MP Init Token:", mpAccessToken ? `${mpAccessToken.substring(0, 10)}... (Length: ${mpAccessToken.length})` : "MISSING");
+mercadopago.configure({
+    access_token: mpAccessToken
+});
 
 // Helper for JSON response
 function jsonResponse(data, status = 200) {
