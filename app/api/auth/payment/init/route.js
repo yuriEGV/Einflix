@@ -42,40 +42,43 @@ export async function POST(req) {
         // Encode details in external_reference: userId|planType|duration
         const externalRef = `${userId}|${planType || 'basic'}|${duration || 'monthly'}`;
 
+        // Detectar URL base para los retornos
         const protocol = req.headers.get('x-forwarded-proto') || 'http';
         const host = req.headers.get('host');
-        const baseUrl = `${protocol}://${host}`;
+        // Priorizar NEXT_PUBLIC_APP_URL para que Mercado Pago vea una URL válida
+        const publicUrl = process.env.NEXT_PUBLIC_APP_URL || `${protocol}://${host}`;
+        const callbackUrl = `${publicUrl}/api/auth/payment/callback`;
 
-        console.log("Generating payment for Base URL:", baseUrl);
+        console.log("Generating payment. Public Callback URL:", callbackUrl);
+
+        // Configurar SDK dentro del request para asegurar frescura (v1 syntax)
+        mercadopago.configurations.setAccessToken(mpAccessToken);
 
         // Crear la preferencia de Mercado Pago
         const preference = {
             items: [
                 {
                     title: title || 'Suscripción Einflix',
-                    unit_price: Number(amount) || 5000,
+                    unit_price: Math.floor(Number(amount)) || 5000,
                     quantity: 1,
                     currency_id: 'CLP'
                 }
             ],
             back_urls: {
-                success: `${baseUrl}/api/auth/payment/callback`,
-                failure: `${baseUrl}/api/auth/payment/callback`,
-                pending: `${baseUrl}/api/auth/payment/callback`
+                success: callbackUrl,
+                failure: callbackUrl,
+                pending: callbackUrl
             },
-            auto_return: 'approved',
-            external_reference: externalRef,
+            // IMPORTANTE: Mercado Pago suele rechazar 'auto_return' si la URL es 'localhost'
+            auto_return: host.includes('localhost') && !process.env.NEXT_PUBLIC_APP_URL ? undefined : 'approved',
+            external_reference: String(externalRef)
         };
 
-        // Solo agregar notification_url si NO es localhost (MP lo rechaza)
-        if (!host.includes('localhost') || process.env.NEXT_PUBLIC_APP_URL) {
-            preference.notification_url = `${process.env.NEXT_PUBLIC_APP_URL || baseUrl}/api/auth/payment/webhook`;
-            console.log("Setting notification_url:", preference.notification_url);
-        }
-
-        console.log("Preference back_urls.success:", preference.back_urls.success);
+        console.log("Sending Preference Payload:", JSON.stringify(preference, null, 2));
 
         const response = await mercadopago.preferences.create(preference);
+
+        console.log("MP Response Status:", response.status);
 
         return jsonResponse({
             id: response.body.id,
