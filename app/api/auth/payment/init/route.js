@@ -8,7 +8,10 @@ export const dynamic = 'force-dynamic';
 const SECRET_KEY = process.env.JWT_SECRET || 'einflix_super_secret_key_2024';
 
 // Configurar SDK de Mercado Pago
-mercadopago.configurations.setAccessToken(process.env.MP_ACCESS_TOKEN || 'TEST-3392348560888206-122208-144d15655c654f164624446345839444-12345678');
+// Configurar SDK de Mercado Pago
+const mpAccessToken = process.env.MP_ACCESS_TOKEN;
+console.log("MP Init Token:", mpAccessToken ? `${mpAccessToken.substring(0, 10)}...` : "MISSING");
+mercadopago.configurations.setAccessToken(mpAccessToken);
 
 // Helper for JSON response
 function jsonResponse(data, status = 200) {
