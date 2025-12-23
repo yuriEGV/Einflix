@@ -156,16 +156,24 @@ export async function GET(req) {
             let category = tags[0] || (isFolder ? 'Carpeta' : 'Multimedia');
             category = category.charAt(0).toUpperCase() + category.slice(1);
 
-            // Thumbnail inteligente
-            let thumbnail = item.cover || `/api/drive/thumbnail?id=${id}`;
-            if (thumbnail.includes('drive.google.com/thumbnail')) {
-                // Forzar imagen temática si la de drive suele faller
+            // Thumbnail inteligente para evitar bloqueos CORB (Cross-Origin Read Blocking)
+            let thumbnail = item.cover || `https://lh3.googleusercontent.com/u/0/d/${id}=w800-iv1`;
+
+            // Si la URL es la de thumbnail estándar de drive, preferimos el proxy lh3 o una temática
+            if (thumbnail.includes('drive.google.com/thumbnail') || thumbnail.includes('drive.google.com/drive')) {
                 const lowTags = tags.map(t => t.toLowerCase());
+                let foundThematic = false;
                 for (const [key, url] of Object.entries(categoryImages)) {
-                    if (lowTags.includes(key)) {
+                    if (lowTags.includes(key) || category.toLowerCase().includes(key)) {
                         thumbnail = url;
+                        foundThematic = true;
                         break;
                     }
+                }
+
+                // Si no hay temática, usamos el visor directo de thumbnails de alta calidad
+                if (!foundThematic && id) {
+                    thumbnail = `https://lh3.googleusercontent.com/u/0/d/${id}=w800-iv1`;
                 }
             }
 

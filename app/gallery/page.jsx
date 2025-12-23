@@ -87,6 +87,11 @@ export default function GalleryPage() {
                     <img
                         src={featuredItem.thumbnail.includes('unsplash') ? featuredItem.thumbnail.replace('w=800', 'w=1600') : featuredItem.thumbnail}
                         alt="Featured"
+                        crossOrigin="anonymous"
+                        onError={(e) => {
+                            e.target.src = 'https://images.unsplash.com/photo-1542204172-3f2fea459039?q=80&w=1600&auto=format&fit=crop';
+                            e.target.style.opacity = '0.5';
+                        }}
                         style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     />
                     <div className="hero-content">
@@ -107,7 +112,16 @@ export default function GalleryPage() {
                         ) : (
                             items.map((it) => (
                                 <div key={it.id} className="card" onClick={() => handleItemClick(it)}>
-                                    <img src={it.thumbnail} alt={it.title} loading="lazy" />
+                                    <img
+                                        src={it.thumbnail}
+                                        alt={it.title}
+                                        loading="lazy"
+                                        crossOrigin="anonymous"
+                                        onError={(e) => {
+                                            e.target.src = 'https://images.unsplash.com/photo-1542204172-3f2fea459039?q=80&w=400&auto=format&fit=crop';
+                                            e.target.style.filter = 'grayscale(100%) brightness(50%)';
+                                        }}
+                                    />
                                     <div className="card-info">
                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                                             <span className="badge" style={{ alignSelf: 'flex-start', marginBottom: '4px' }}>{it.category}</span>

@@ -84,6 +84,8 @@ export default function ResetPasswordPage() {
 
                     <div className="input-group">
                         <input
+                            id="password"
+                            name="password"
                             type="password"
                             placeholder="Nueva contraseña"
                             value={password}
@@ -95,6 +97,8 @@ export default function ResetPasswordPage() {
 
                     <div className="input-group">
                         <input
+                            id="confirmPassword"
+                            name="confirmPassword"
                             type="password"
                             placeholder="Confirmar nueva contraseña"
                             value={confirmPassword}

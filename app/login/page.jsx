@@ -52,6 +52,8 @@ export default function LoginPage() {
 
                     <div className="input-group">
                         <input
+                            id="email"
+                            name="email"
                             type="email"
                             placeholder="Correo electrónico"
                             value={email}
@@ -62,6 +64,8 @@ export default function LoginPage() {
 
                     <div className="input-group">
                         <input
+                            id="password"
+                            name="password"
                             type="password"
                             placeholder="Contraseña"
                             value={password}

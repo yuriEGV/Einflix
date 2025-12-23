@@ -3592,7 +3592,7 @@ const SECRET_KEY = process.env.JWT_SECRET || "einflix_super_secret_key_2024";
 async function middleware(req) {
     const { pathname } = req.nextUrl;
     // 1. Rutas públicas (no requieren auth)
-    if (pathname.startsWith("/login") || pathname.startsWith("/register") || pathname.startsWith("/forgot-password") || pathname.startsWith("/_next") || pathname.startsWith("/api/auth") || pathname === "/favicon.ico" || pathname === "/") {
+    if (pathname.startsWith("/login") || pathname.startsWith("/register") || pathname.startsWith("/forgot-password") || pathname.startsWith("/reset-password") || pathname.startsWith("/_next") || pathname.startsWith("/api/auth") || pathname === "/favicon.ico" || pathname === "/") {
         return NextResponse.next();
     }
     // 2. Verificar autenticación

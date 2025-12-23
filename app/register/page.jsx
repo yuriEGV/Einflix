@@ -155,6 +155,8 @@ export default function RegisterPage() {
 
                         <div style={{ marginBottom: '16px' }}>
                             <input
+                                id="name"
+                                name="name"
                                 type="text"
                                 placeholder="Nombre completo"
                                 value={name}
@@ -174,6 +176,8 @@ export default function RegisterPage() {
 
                         <div style={{ marginBottom: '16px' }}>
                             <input
+                                id="email"
+                                name="email"
                                 type="email"
                                 placeholder="Correo electrónico"
                                 value={email}
@@ -193,6 +197,8 @@ export default function RegisterPage() {
 
                         <div style={{ marginBottom: '20px' }}>
                             <input
+                                id="password"
+                                name="password"
                                 type="password"
                                 placeholder="Contraseña (mín. 6 caracteres)"
                                 value={password}
@@ -214,6 +220,8 @@ export default function RegisterPage() {
                         <div style={{ marginBottom: '20px' }}>
                             <label style={{ display: 'block', marginBottom: '8px', color: '#ccc' }}>Selecciona tu Plan:</label>
                             <select
+                                id="planType"
+                                name="planType"
                                 value={planType}
                                 onChange={(e) => setPlanType(e.target.value)}
                                 style={{ width: '100%', padding: '16px 20px', borderRadius: '4px', border: 'none', backgroundColor: '#333', color: 'white', fontSize: '1rem', cursor: 'pointer' }}

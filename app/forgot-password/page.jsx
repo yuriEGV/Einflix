@@ -57,6 +57,8 @@ export default function ForgotPasswordPage() {
 
                     <div className="input-group">
                         <input
+                            id="email"
+                            name="email"
                             type="email"
                             placeholder="Correo electrónico"
                             value={email}
