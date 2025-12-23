@@ -54,6 +54,7 @@ export async function POST(req) {
             },
             auto_return: 'approved',
             external_reference: externalRef,
+            notification_url: `${process.env.NEXT_PUBLIC_APP_URL || new URL(req.url).origin}/api/auth/payment/webhook`
         };
 
         const response = await mercadopago.preferences.create(preference);

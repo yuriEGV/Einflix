@@ -1,1 +1,1 @@
-{"version":1,"functions":{"/api/auth/payment/init":{},"/api/drive/catalogo":{},"/api/drive/thumbnail":{},"/api/auth/payment/callback":{}}}
+{"version":1,"functions":{"/api/auth/payment/init":{},"/api/auth/payment/callback":{},"/api/auth/payment/webhook":{},"/api/drive/thumbnail":{},"/api/drive/catalogo":{}}}
