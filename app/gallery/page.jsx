@@ -10,6 +10,11 @@ export default function GalleryPage() {
     const [active, setActive] = useState(null)
     const [scrolled, setScrolled] = useState(false)
 
+    // Folder Explorer State
+    const [folderContent, setFolderContent] = useState([])
+    const [folderLoading, setFolderLoading] = useState(false)
+    const [history, setHistory] = useState([]) // Stack of {id, title}
+
     useEffect(() => {
         const handleScroll = () => {
             setScrolled(window.scrollY > 50)
@@ -19,16 +24,9 @@ export default function GalleryPage() {
         async function load() {
             setLoading(true)
             try {
-                // Fetch from the new catalogo endpoint
                 const res = await fetch('/api/drive/catalogo')
-                const text = await res.text()
-                try {
-                    const data = JSON.parse(text)
-                    setItems(Array.isArray(data) ? data : [])
-                } catch (parseError) {
-                    console.error("JSON Parse Error. Raw response:", text)
-                    throw new Error("Invalid JSON response from server")
-                }
+                const data = await res.json()
+                setItems(Array.isArray(data) ? data : [])
             } catch (e) {
                 console.error("Error loading catalogue:", e)
             } finally {
@@ -42,8 +40,47 @@ export default function GalleryPage() {
 
     const featuredItem = items[0]
 
+    // Handle Folder Navigation
+    const openFolder = async (folder) => {
+        setFolderLoading(true)
+        try {
+            const res = await fetch(`/api/drive/list?id=${folder.id}`)
+            const data = await res.json()
+            if (data.error) throw new Error(data.error)
+
+            setFolderContent(data)
+            setHistory(prev => [...prev, { id: folder.id, title: folder.title }])
+            if (!active || active.id !== folder.id) {
+                setActive(folder)
+            }
+        } catch (e) {
+            console.error("Error loading folder:", e)
+        } finally {
+            setFolderLoading(false)
+        }
+    }
+
     const handleItemClick = (it) => {
-        setActive(it)
+        if (it.type === 'folder') {
+            setHistory([]) // Reset history when starting fresh from gallery
+            openFolder(it)
+        } else {
+            setActive(it)
+        }
+    }
+
+    const goBack = () => {
+        const newHistory = [...history]
+        newHistory.pop() // Remove current
+        if (newHistory.length === 0) {
+            setHistory([])
+            setFolderContent([])
+            setActive(null)
+        } else {
+            const parent = newHistory[newHistory.length - 1]
+            setHistory(newHistory.slice(0, -1)) // Temporary to avoid double add
+            openFolder(parent)
+        }
     }
 
     const handleLogout = async () => {
@@ -85,7 +122,7 @@ export default function GalleryPage() {
                         alt="Featured"
                         crossOrigin="anonymous"
                         onError={(e) => {
-                            e.target.onerror = null; // Prevenir loop infinito
+                            e.target.onerror = null;
                             e.target.src = 'https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?q=80&w=1600&auto=format&fit=crop';
                             e.target.style.opacity = '0.5';
                         }}
@@ -115,7 +152,7 @@ export default function GalleryPage() {
                                         loading="lazy"
                                         crossOrigin="anonymous"
                                         onError={(e) => {
-                                            e.target.onerror = null; // Prevenir loop infinito
+                                            e.target.onerror = null;
                                             e.target.src = 'https://images.unsplash.com/photo-1485846234645-a62644f84728?q=80&w=400&auto=format&fit=crop';
                                             e.target.style.filter = 'grayscale(100%) brightness(50%)';
                                         }}
@@ -136,20 +173,46 @@ export default function GalleryPage() {
                 </section>
             </div>
 
-            {/* Modal Player */}
+            {/* Modal Player / Explorer */}
             {active && (
                 <div className="modal" onClick={() => setActive(null)}>
                     <div className="inner" onClick={(e) => e.stopPropagation()}>
                         <button className="close-btn" onClick={() => setActive(null)}>✕</button>
 
                         <div className={`video-container ${active.type === 'folder' ? 'folder-mode' : ''}`}>
-                            <iframe
-                                src={active.preview}
-                                title={active.title}
-                                allow="autoplay; fullscreen"
-                                allowFullScreen
-                                sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"
-                            />
+                            {active.type === 'folder' ? (
+                                <div className="native-explorer">
+                                    <div className="explorer-header">
+                                        {history.length > 1 && (
+                                            <button className="back-btn" onClick={goBack}>← Volver</button>
+                                        )}
+                                        <span className="current-path">{history.map(h => h.title).join(' / ')}</span>
+                                    </div>
+                                    <div className="explorer-grid">
+                                        {folderLoading ? (
+                                            <div className="loading-spinner">Cargando...</div>
+                                        ) : (
+                                            folderContent.map(file => (
+                                                <div key={file.id} className="explorer-card" onClick={() => file.type === 'folder' ? openFolder(file) : setActive(file)}>
+                                                    <div className="explorer-thumb">
+                                                        <img src={file.thumbnail} alt={file.title} crossOrigin="anonymous" />
+                                                        {file.type === 'folder' && <span className="folder-icon">📁</span>}
+                                                    </div>
+                                                    <div className="explorer-title">{file.title}</div>
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
+                                </div>
+                            ) : (
+                                <iframe
+                                    src={active.preview}
+                                    title={active.title}
+                                    allow="autoplay; fullscreen"
+                                    allowFullScreen
+                                    sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"
+                                />
+                            )}
                         </div>
 
                         <div className="modal-content">
@@ -166,13 +229,6 @@ export default function GalleryPage() {
                                     ? 'Explora el contenido de esta colección directamente desde Einflix.'
                                     : 'Disfruta de la mejor calidad de reproducción.')}
                             </p>
-                            {active.type === 'folder' && (
-                                <div style={{ marginTop: '20px', padding: '15px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '8px' }}>
-                                    <p style={{ fontSize: '0.9rem', color: '#aaa', margin: 0 }}>
-                                        <span style={{ color: 'var(--netflix-red)' }}>TIP:</span> Navega por los archivos arriba y haz clic para verlos.
-                                    </p>
-                                </div>
-                            )}
                         </div>
                     </div>
                 </div>
