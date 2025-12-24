@@ -68,7 +68,7 @@ export async function GET(req) {
                 status: status
             });
 
-            return Response.redirect(new URL('/gallery?payment=success', req.url));
+            return Response.redirect(new URL('/payment/success', req.url));
         } else {
             return Response.redirect(new URL('/payment?status=failed', req.url));
         }
