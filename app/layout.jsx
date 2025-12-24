@@ -1,4 +1,5 @@
 import './globals.css'
+import InactivityTracker from './components/InactivityTracker'
 
 export const metadata = {
     title: 'Einflix - Gallery',
@@ -9,7 +10,9 @@ export default function RootLayout({ children }) {
     return (
         <html lang="es">
             <body>
-                {children}
+                <InactivityTracker>
+                    {children}
+                </InactivityTracker>
             </body>
         </html>
     )

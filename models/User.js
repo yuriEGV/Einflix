@@ -28,6 +28,10 @@ const UserSchema = new mongoose.Schema({
         default: null
     },
     subscriptionExpiry: Date,
+    activeSessionId: {
+        type: String,
+        default: null
+    },
 }, { timestamps: true });
 
 // Encriptar contraseña antes de guardar - REMOVED to avoid context issues in production

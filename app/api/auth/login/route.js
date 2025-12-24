@@ -36,12 +36,18 @@ export async function POST(req) {
 
         if (user && (await user.comparePassword(password))) {
             const secret = new TextEncoder().encode(SECRET_KEY);
+            const activeSessionId = crypto.randomUUID();
+
+            // Update user with new session ID to invalidate previous sessions
+            user.activeSessionId = activeSessionId;
+            await user.save();
 
             const token = await new SignJWT({
                 email: user.email,
                 id: user._id.toString(), // Ensure string string for JWT
                 name: user.name,
-                isPaid: user.isPaid || false
+                isPaid: user.isPaid || false,
+                sessionId: activeSessionId // Include session ID in JWT
             })
                 .setProtectedHeader({ alg: 'HS256' })
                 .setIssuedAt()

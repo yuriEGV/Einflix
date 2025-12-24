@@ -31,28 +31,52 @@ export async function middleware(req) {
         const secret = new TextEncoder().encode(SECRET_KEY);
         const { payload } = await jwtVerify(token, secret);
 
-        // 3. Verificar estado de pago
-        // Si ya está en /payment, permitirlo para evitar bucle
+        // 3. Verificar sesión única (Single-Device Session)
+        // Importación dinámica de dbConnect y User para el middleware de Next.js (Edge Runtime)
+        // Nota: El middleware nativo de Next.js no soporta mongoose directamente si corre en Edge.
+        // Pero si corremos en Node environment (como parece ser este setup), lo usamos.
+        const dbConnect = (await import('@/lib/mongodb')).default;
+        const User = (await import('@/models/User')).default;
+
+        await dbConnect();
+        const user = await User.findById(payload.id);
+
+        if (!user || user.activeSessionId !== payload.sessionId) {
+            console.warn('Middleware: Sesión invalidada por otro inicio de sesión');
+            const response = NextResponse.redirect(new URL('/login', req.url));
+            response.cookies.delete('session_token');
+            return response;
+        }
+
+        // 4. Verificar estado de pago
         if (pathname === '/payment') {
-            // Si el usuario YA pagó y trata de entrar a /payment, mandarlo al home
             if (payload.isPaid) {
                 return NextResponse.redirect(new URL('/gallery', req.url));
             }
             return NextResponse.next();
         }
 
-        // Si NO ha pagado, forzar redirección a /payment
-        // MODIFICACION TEMPORAL: Permitir acceso aunque no haya pagado para que el usuario pueda ver la app
-        // if (!payload.isPaid) {
-        //    return NextResponse.redirect(new URL('/payment', req.url));
-        // }
+        // 5. Implementar Sliding Session (actualizar expiración a 3 horas desde ahora)
+        const response = NextResponse.next();
 
-        // Si todo está bien (Logueado + Pagado), permitir acceso
-        return NextResponse.next();
+        // Agregar cabeceras para evitar caché del navegador (evita que el botón "atrás" muestre contenido sensible)
+        response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+        response.headers.set('Pragma', 'no-cache');
+        response.headers.set('Expires', '0');
+
+        // Refrescar la cookie de sesión
+        response.cookies.set('session_token', token, {
+            path: '/',
+            maxAge: 3 * 60 * 60, // 3 horas
+            httpOnly: true,
+            sameSite: 'lax',
+            secure: process.env.NODE_ENV === 'production'
+        });
+
+        return response;
 
     } catch (error) {
         console.error('Middleware: Token inválido o expirado:', error.message);
-        // Limpiar cookie y redirigir
         const response = NextResponse.redirect(new URL('/login', req.url));
         response.cookies.delete('session_token');
         return response;
