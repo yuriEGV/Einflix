@@ -17,6 +17,18 @@ const UserSchema = new mongoose.Schema({
         required: [true, 'Por favor, ingresa una contraseña'],
         minlength: 6,
     },
+    roles: {
+        type: [String],
+        default: ['user']
+    },
+    profiles: [{
+        name: String,
+        avatar: String,
+        isKid: { type: Boolean, default: false },
+        preferences: [String]
+    }],
+    lastLogin: Date,
+    stripeCustomerId: String,
     resetToken: String,
     resetTokenExpiry: Date,
     isPaid: {

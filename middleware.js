@@ -41,13 +41,23 @@ export async function middleware(req) {
             try {
                 const secret = new TextEncoder().encode(SECRET_KEY);
                 const { payload } = await jwtVerify(token, secret);
-                console.log(`[Middleware] Validating session for ${payload.email}`);
 
-                // 3. Verificar sesión única (Llamada interna con cache busting)
+                // 3. Requerir sessionId para seguridad estricta
+                if (!payload.sessionId) {
+                    console.warn(`[Middleware] Token missing sessionId for ${payload.email}`);
+                    response = NextResponse.redirect(new URL('/login', req.url));
+                    response.cookies.delete('session_token');
+                    return response;
+                }
+
+                console.log(`[Middleware] Validating ${payload.email} | SID: ${payload.sessionId}`);
+
+                // 4. Verificar sesión única (Llamada interna con cache busting)
                 const checkUrl = new URL('/api/auth/session-check', req.url);
-                checkUrl.searchParams.set('t', Date.now().toString()); // Cache busting
+                checkUrl.searchParams.set('t', Date.now().toString());
 
                 let isActive = true;
+                let dbSessionId = 'unknown';
                 try {
                     const checkRes = await fetch(checkUrl.href, {
                         method: 'POST',
@@ -59,19 +69,18 @@ export async function middleware(req) {
                     if (checkRes.ok) {
                         const data = await checkRes.json();
                         isActive = data.active;
-                    } else {
-                        console.error(`[Middleware] Session check failed: ${checkRes.status}`);
+                        dbSessionId = data.dbSessionId || 'empty';
                     }
                 } catch (fetchError) {
                     console.error('[Middleware] Fetch error:', fetchError.message);
                 }
 
                 if (!isActive) {
-                    console.warn(`[Middleware] Session invalidated for ${payload.email}`);
+                    console.warn(`[Middleware] Session MISMATCH for ${payload.email}. DB: ${dbSessionId} vs Token: ${payload.sessionId}`);
                     response = NextResponse.redirect(new URL('/login', req.url));
                     response.cookies.delete('session_token');
                 } else {
-                    // 4. Implementar Sliding Session
+                    // 5. Implementar Sliding Session
                     response = NextResponse.next();
                     response.cookies.set('session_token', token, {
                         path: '/',

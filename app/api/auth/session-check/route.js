@@ -8,7 +8,6 @@ export async function POST(req) {
         const t = searchParams.get('t');
 
         const { id, sessionId } = await req.json();
-        console.log(`[SessionCheck] t=${t} | ID: ${id} | SessionID: ${sessionId}`);
 
         const user = await User.findById(id);
 
@@ -18,13 +17,12 @@ export async function POST(req) {
         }
 
         const isActive = user.activeSessionId === sessionId;
-        console.log(`[SessionCheck] Result for ${user.email}: ${isActive} (DB: ${user.activeSessionId} vs Token: ${sessionId})`);
+        console.log(`[SessionCheck] t=${t} | Result for ${user.email}: ${isActive} (DB: ${user.activeSessionId} vs Token: ${sessionId})`);
 
-        if (!isActive) {
-            return new Response(JSON.stringify({ active: false }), { status: 200 });
-        }
-
-        return new Response(JSON.stringify({ active: true }), { status: 200 });
+        return new Response(JSON.stringify({
+            active: isActive,
+            dbSessionId: user.activeSessionId
+        }), { status: 200 });
     } catch (error) {
         console.error("Session check error:", error);
         return new Response(JSON.stringify({ active: false, error: error.message }), { status: 500 });

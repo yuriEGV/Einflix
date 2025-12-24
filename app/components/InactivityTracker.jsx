@@ -39,9 +39,24 @@ export default function InactivityTracker({ children }) {
             return;
         }
 
+        const checkSession = async () => {
+            try {
+                const res = await fetch('/api/auth/session-status');
+                const data = await res.json();
+                if (data.active === false) {
+                    console.warn('[Heartbeat] Session invalidated, logging out...');
+                    logout();
+                }
+            } catch (e) {
+                console.error('[Heartbeat] Check failed', e);
+            }
+        };
+
         const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
 
         resetTimer();
+        checkSession(); // Check on mount
+        const heartbeat = setInterval(checkSession, 60000); // Check every minute
 
         events.forEach(event => {
             window.addEventListener(event, resetTimer);
@@ -49,6 +64,7 @@ export default function InactivityTracker({ children }) {
 
         return () => {
             if (timerRef.current) clearTimeout(timerRef.current);
+            clearInterval(heartbeat);
             events.forEach(event => {
                 window.removeEventListener(event, resetTimer);
             });
