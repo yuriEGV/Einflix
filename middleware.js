@@ -18,6 +18,7 @@ export async function middleware(req) {
         pathname === '/';
 
     const token = req.cookies.get('session_token')?.value;
+    let response;
 
     // Si es ruta pública y tiene token, verificar si debe ir al home (Gallery)
     if (isPublicRoute) {
@@ -25,80 +26,76 @@ export async function middleware(req) {
             try {
                 const secret = new TextEncoder().encode(SECRET_KEY);
                 await jwtVerify(token, secret);
-                return NextResponse.redirect(new URL('/gallery', req.url));
+                response = NextResponse.redirect(new URL('/gallery', req.url));
             } catch (e) {
-                // Token inválido, ignorar y dejar que vea la ruta pública
+                response = NextResponse.next();
+            }
+        } else {
+            response = NextResponse.next();
+        }
+    } else {
+        // 2. Verificar autenticación
+        if (!token) {
+            response = NextResponse.redirect(new URL('/login', req.url));
+        } else {
+            try {
+                const secret = new TextEncoder().encode(SECRET_KEY);
+                const { payload } = await jwtVerify(token, secret);
+                console.log(`[Middleware] Validating session for ${payload.email}`);
+
+                // 3. Verificar sesión única (Llamada interna con cache busting)
+                const checkUrl = new URL('/api/auth/session-check', req.url);
+                checkUrl.searchParams.set('t', Date.now().toString()); // Cache busting
+
+                let isActive = true;
+                try {
+                    const checkRes = await fetch(checkUrl.href, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ id: payload.id, sessionId: payload.sessionId }),
+                        cache: 'no-store'
+                    });
+
+                    if (checkRes.ok) {
+                        const data = await checkRes.json();
+                        isActive = data.active;
+                    } else {
+                        console.error(`[Middleware] Session check failed: ${checkRes.status}`);
+                    }
+                } catch (fetchError) {
+                    console.error('[Middleware] Fetch error:', fetchError.message);
+                }
+
+                if (!isActive) {
+                    console.warn(`[Middleware] Session invalidated for ${payload.email}`);
+                    response = NextResponse.redirect(new URL('/login', req.url));
+                    response.cookies.delete('session_token');
+                } else {
+                    // 4. Implementar Sliding Session
+                    response = NextResponse.next();
+                    response.cookies.set('session_token', token, {
+                        path: '/',
+                        maxAge: 3 * 60 * 60,
+                        httpOnly: true,
+                        sameSite: 'lax',
+                        secure: process.env.NODE_ENV === 'production'
+                    });
+                }
+            } catch (error) {
+                console.error('Middleware Security Error:', error.message);
+                response = NextResponse.redirect(new URL('/login', req.url));
+                response.cookies.delete('session_token');
             }
         }
-        return NextResponse.next();
     }
 
-    // 2. Verificar autenticación
-    if (!token) {
-        return NextResponse.redirect(new URL('/login', req.url));
-    }
+    // Cabeceras extremas para deshabilitar bfcache y cache del navegador en TODA respuesta
+    response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0, s-maxage=0');
+    response.headers.set('Pragma', 'no-cache');
+    response.headers.set('Expires', '0');
+    response.headers.set('Surrogate-Control', 'no-store');
 
-    try {
-        const secret = new TextEncoder().encode(SECRET_KEY);
-        const { payload } = await jwtVerify(token, secret);
-        console.log(`[Middleware] Validating session for ${payload.email}`);
-
-        // 3. Verificar sesión única (Llamada interna para evitar Mongoose en Edge)
-        const checkUrl = new URL('/api/auth/session-check', req.url);
-        let isActive = true;
-        try {
-            const checkRes = await fetch(checkUrl.href, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id: payload.id, sessionId: payload.sessionId }),
-                cache: 'no-store'
-            });
-
-            if (checkRes.ok) {
-                const data = await checkRes.json();
-                isActive = data.active;
-            } else {
-                console.error(`[Middleware] Session check failed with status: ${checkRes.status}`);
-                // Si falla el check por error de servidor, por seguridad podríamos invalidar, 
-                // pero por ahora dejemos entrar para evitar bloqueos por errores temporales de red interna.
-            }
-        } catch (fetchError) {
-            console.error('[Middleware] Fetch error checking session:', fetchError.message);
-        }
-
-        if (!isActive) {
-            console.warn(`[Middleware] Session invalidated for ${payload.email} (Different device)`);
-            const response = NextResponse.redirect(new URL('/login', req.url));
-            response.cookies.delete('session_token');
-            return response;
-        }
-
-        // 4. Implementar Sliding Session y Deshabilitar Caché total
-        const response = NextResponse.next();
-
-        // Cabeceras extremas para evitar que el navegador guarde la página
-        response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
-        response.headers.set('Pragma', 'no-cache');
-        response.headers.set('Expires', '0');
-        response.headers.set('Surrogate-Control', 'no-store');
-
-        // Refrescar expiración de la cookie a 3 horas
-        response.cookies.set('session_token', token, {
-            path: '/',
-            maxAge: 3 * 60 * 60,
-            httpOnly: true,
-            sameSite: 'lax',
-            secure: process.env.NODE_ENV === 'production'
-        });
-
-        return response;
-
-    } catch (error) {
-        console.error('Middleware Security Error:', error.message);
-        const response = NextResponse.redirect(new URL('/login', req.url));
-        response.cookies.delete('session_token');
-        return response;
-    }
+    return response;
 }
 
 export const config = {

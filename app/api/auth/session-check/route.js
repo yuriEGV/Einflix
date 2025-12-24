@@ -4,8 +4,11 @@ import User from '@/models/User';
 export async function POST(req) {
     try {
         await dbConnect();
+        const { searchParams } = new URL(req.url);
+        const t = searchParams.get('t');
+
         const { id, sessionId } = await req.json();
-        console.log(`[SessionCheck] Checking session for ID: ${id}, SessionID: ${sessionId}`);
+        console.log(`[SessionCheck] t=${t} | ID: ${id} | SessionID: ${sessionId}`);
 
         const user = await User.findById(id);
 
