@@ -32,16 +32,16 @@ export async function middleware(req) {
         const { payload } = await jwtVerify(token, secret);
 
         // 3. Verificar sesión única (Single-Device Session)
-        // Importación dinámica de dbConnect y User para el middleware de Next.js (Edge Runtime)
-        // Nota: El middleware nativo de Next.js no soporta mongoose directamente si corre en Edge.
-        // Pero si corremos en Node environment (como parece ser este setup), lo usamos.
-        const dbConnect = (await import('@/lib/mongodb')).default;
-        const User = (await import('@/models/User')).default;
+        // Usamos una llamada a la API interna porque Mongoose no es compatible con el Edge Runtime del Middleware
+        const checkRes = await fetch(new URL('/api/auth/session-check', req.url).href, {
+            method: 'POST',
+            body: JSON.stringify({ id: payload.id, sessionId: payload.sessionId }),
+            headers: { 'Content-Type': 'application/json' }
+        });
 
-        await dbConnect();
-        const user = await User.findById(payload.id);
+        const { active } = await checkRes.json();
 
-        if (!user || user.activeSessionId !== payload.sessionId) {
+        if (!active) {
             console.warn('Middleware: Sesión invalidada por otro inicio de sesión');
             const response = NextResponse.redirect(new URL('/login', req.url));
             response.cookies.delete('session_token');
