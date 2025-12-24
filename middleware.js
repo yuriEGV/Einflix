@@ -7,7 +7,7 @@ export async function middleware(req) {
     const { pathname } = req.nextUrl;
 
     // 1. Rutas públicas (no requieren auth)
-    if (
+    const isPublicRoute =
         pathname.startsWith('/login') ||
         pathname.startsWith('/register') ||
         pathname.startsWith('/forgot-password') ||
@@ -15,14 +15,25 @@ export async function middleware(req) {
         pathname.startsWith('/_next') ||
         pathname.startsWith('/api/auth') ||
         pathname === '/favicon.ico' ||
-        pathname === '/'
-    ) {
+        pathname === '/';
+
+    const token = req.cookies.get('session_token')?.value;
+
+    // Si es ruta pública y tiene token, verificar si debe ir al home (Gallery)
+    if (isPublicRoute) {
+        if (token && (pathname === '/login' || pathname === '/register' || pathname === '/')) {
+            try {
+                const secret = new TextEncoder().encode(SECRET_KEY);
+                await jwtVerify(token, secret);
+                return NextResponse.redirect(new URL('/gallery', req.url));
+            } catch (e) {
+                // Token inválido, ignorar y dejar que vea la ruta pública
+            }
+        }
         return NextResponse.next();
     }
 
     // 2. Verificar autenticación
-    const token = req.cookies.get('session_token')?.value;
-
     if (!token) {
         return NextResponse.redirect(new URL('/login', req.url));
     }
@@ -30,25 +41,36 @@ export async function middleware(req) {
     try {
         const secret = new TextEncoder().encode(SECRET_KEY);
         const { payload } = await jwtVerify(token, secret);
+        console.log(`[Middleware] Validating session for ${payload.email}`);
 
         // 3. Verificar sesión única (Llamada interna para evitar Mongoose en Edge)
-        // Nota: Agregamos timestamp para evitar cualquier cache de la petición fetch
         const checkUrl = new URL('/api/auth/session-check', req.url);
-        const checkRes = await fetch(checkUrl.href, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id: payload.id, sessionId: payload.sessionId }),
-            cache: 'no-store'
-        });
+        let isActive = true;
+        try {
+            const checkRes = await fetch(checkUrl.href, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: payload.id, sessionId: payload.sessionId }),
+                cache: 'no-store'
+            });
 
-        if (checkRes.ok) {
-            const { active } = await checkRes.json();
-            if (!active) {
-                console.warn('Middleware: Sesión invalidada por otro inicio de sesión');
-                const response = NextResponse.redirect(new URL('/login', req.url));
-                response.cookies.delete('session_token');
-                return response;
+            if (checkRes.ok) {
+                const data = await checkRes.json();
+                isActive = data.active;
+            } else {
+                console.error(`[Middleware] Session check failed with status: ${checkRes.status}`);
+                // Si falla el check por error de servidor, por seguridad podríamos invalidar, 
+                // pero por ahora dejemos entrar para evitar bloqueos por errores temporales de red interna.
             }
+        } catch (fetchError) {
+            console.error('[Middleware] Fetch error checking session:', fetchError.message);
+        }
+
+        if (!isActive) {
+            console.warn(`[Middleware] Session invalidated for ${payload.email} (Different device)`);
+            const response = NextResponse.redirect(new URL('/login', req.url));
+            response.cookies.delete('session_token');
+            return response;
         }
 
         // 4. Implementar Sliding Session y Deshabilitar Caché total

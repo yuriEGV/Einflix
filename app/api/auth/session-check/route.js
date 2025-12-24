@@ -5,14 +5,19 @@ export async function POST(req) {
     try {
         await dbConnect();
         const { id, sessionId } = await req.json();
-
-        if (!id || !sessionId) {
-            return new Response(JSON.stringify({ active: false, message: "Missing params" }), { status: 400 });
-        }
+        console.log(`[SessionCheck] Checking session for ID: ${id}, SessionID: ${sessionId}`);
 
         const user = await User.findById(id);
 
-        if (!user || user.activeSessionId !== sessionId) {
+        if (!user) {
+            console.log(`[SessionCheck] User not found: ${id}`);
+            return new Response(JSON.stringify({ active: false }), { status: 200 });
+        }
+
+        const isActive = user.activeSessionId === sessionId;
+        console.log(`[SessionCheck] Result for ${user.email}: ${isActive} (DB: ${user.activeSessionId} vs Token: ${sessionId})`);
+
+        if (!isActive) {
             return new Response(JSON.stringify({ active: false }), { status: 200 });
         }
 

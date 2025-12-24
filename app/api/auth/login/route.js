@@ -37,10 +37,12 @@ export async function POST(req) {
         if (user && (await user.comparePassword(password))) {
             const secret = new TextEncoder().encode(SECRET_KEY);
             const activeSessionId = crypto.randomUUID();
+            console.log(`[Login] User ${user.email} (ID: ${user._id}) generating new session: ${activeSessionId}`);
 
             // Update user with new session ID to invalidate previous sessions
             user.activeSessionId = activeSessionId;
             await user.save();
+            console.log(`[Login] Session saved to DB for ${user.email}`);
 
             const token = await new SignJWT({
                 email: user.email,
