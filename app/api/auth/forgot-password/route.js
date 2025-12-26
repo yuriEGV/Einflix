@@ -1,6 +1,6 @@
 import dbConnect from '@/lib/mongodb';
 import User from '@/models/User';
-import crypto from 'crypto';
+import { randomBytes } from 'crypto';
 import nodemailer from 'nodemailer';
 
 // Helper for JSON response
@@ -12,15 +12,6 @@ function jsonResponse(data, status = 200) {
         },
     });
 }
-
-// Configurar transportador de correo (mismo que registro)
-const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-    },
-});
 
 export async function POST(req) {
     try {
@@ -38,7 +29,7 @@ export async function POST(req) {
             );
         }
 
-        const resetToken = crypto.randomBytes(32).toString('hex');
+        const resetToken = randomBytes(32).toString('hex');
         const resetTokenExpiry = Date.now() + 3600000; // 1 hora
 
         user.resetToken = resetToken;
@@ -49,6 +40,15 @@ export async function POST(req) {
         const host = req.headers.get('host');
         const baseUrl = process.env.NEXT_PUBLIC_APP_URL || `${protocol}://${host}`;
         const resetUrl = `${baseUrl}/reset-password?token=${resetToken}`;
+
+        // Configurar transportador
+        const transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+                user: process.env.EMAIL_USER,
+                pass: process.env.EMAIL_PASS,
+            },
+        });
 
         // Enviar correo
         const mailOptions = {

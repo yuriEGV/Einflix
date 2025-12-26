@@ -99,6 +99,8 @@ export async function POST(req) {
             if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
                 console.log("Configuring email transporter...");
                 const nodemailer = (await import('nodemailer')).default;
+
+                // Moved inside handler for fresh env access
                 const transporter = nodemailer.createTransport({
                     service: 'gmail',
                     auth: {
