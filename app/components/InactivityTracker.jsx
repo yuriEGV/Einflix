@@ -55,8 +55,8 @@ export default function InactivityTracker({ children }) {
         const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
 
         resetTimer();
-        checkSession(); // Check on mount
-        const heartbeat = setInterval(checkSession, 60000); // Check every minute
+        // checkSession(); // Check on mount - DISABLED FOR DEBUGGING
+        // const heartbeat = setInterval(checkSession, 60000); // Check every minute - DISABLED FOR DEBUGGING
 
         events.forEach(event => {
             window.addEventListener(event, resetTimer);
