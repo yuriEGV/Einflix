@@ -72,13 +72,21 @@ export async function POST(req) {
 
         console.log("User created:", user._id);
 
+        // --- Generate Session ID for single-device enforcement ---
+        const crypto = await import('crypto');
+        const activeSessionId = crypto.randomUUID();
+        user.activeSessionId = activeSessionId;
+        await user.save();
+        console.log(`[Register] Session ID generated for ${user.email}: ${activeSessionId}`);
+
         // --- Generate Token for Auto-Login ---
         const secret = new TextEncoder().encode(process.env.JWT_SECRET || 'einflix_super_secret_key_2024');
         const token = await new SignJWT({
             email: user.email,
             id: user._id.toString(),
             name: user.name,
-            isPaid: false
+            isPaid: false,
+            sessionId: activeSessionId // Include session ID for heartbeat validation
         })
             .setProtectedHeader({ alg: 'HS256' })
             .setIssuedAt()
