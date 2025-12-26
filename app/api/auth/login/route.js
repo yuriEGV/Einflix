@@ -31,10 +31,26 @@ export async function POST(req) {
 
         const { email, password } = body;
 
+        if (!email || !password) {
+            return jsonResponse(
+                { success: false, message: "Email y contraseña son requeridos" },
+                400
+            );
+        }
+
         // Busqueda insensible a mayúsculas
         const user = await User.findOne({ email: email.toLowerCase() });
 
-        if (user && (await user.comparePassword(password))) {
+        if (!user) {
+            console.log(`[Login] User not found: ${email}`);
+            return jsonResponse(
+                { success: false, message: "Correo o contraseña incorrectos" },
+                401
+            );
+        }
+
+        const isMatch = await user.comparePassword(password);
+        if (isMatch) {
             const secret = new TextEncoder().encode(SECRET_KEY);
             const activeSessionId = crypto.randomUUID();
             console.log(`[Login] User ${user.email} (ID: ${user._id}) generating new session: ${activeSessionId}`);
@@ -46,7 +62,7 @@ export async function POST(req) {
 
             const token = await new SignJWT({
                 email: user.email,
-                id: user._id.toString(), // Ensure string string for JWT
+                id: user._id.toString(), // Ensure string for JWT
                 name: user.name,
                 isPaid: user.isPaid || false,
                 sessionId: activeSessionId // Include session ID in JWT
@@ -63,20 +79,23 @@ export async function POST(req) {
             });
 
             // Set cookie manually
-            // Note: Response.cookies is a Next.js extension on NextResponse.
-            // With standard Response, we set Set-Cookie header.
             const cookieValue = `session_token=${token}; Path=/; Max-Age=${3 * 60 * 60}; HttpOnly; SameSite=Lax${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`;
             response.headers.append('Set-Cookie', cookieValue);
 
             return response;
         }
 
+        console.log(`[Login] Password mismatch for: ${email}`);
         return jsonResponse(
             { success: false, message: "Correo o contraseña incorrectos" },
             401
         );
     } catch (error) {
-        console.error("Login Error:", error);
+        console.error("Login Error Details:", {
+            message: error.message,
+            stack: error.stack,
+            name: error.name
+        });
         return jsonResponse(
             { success: false, message: "Error interno del servidor: " + error.message },
             500

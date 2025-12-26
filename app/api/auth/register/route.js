@@ -27,6 +27,14 @@ export async function POST(req) {
         }
 
         const { name, email, password, planType } = body;
+
+        if (!name || !email || !password) {
+            return jsonResponse(
+                { success: false, message: "Todos los campos (nombre, email, contraseña) son requeridos" },
+                400
+            );
+        }
+
         console.log("Registering:", email, "Plan:", planType);
 
         // Verificar si el usuario ya existe
@@ -42,17 +50,24 @@ export async function POST(req) {
         // Hashing manual
         console.log("Importing bcrypt...");
         const bcryptModule = await import('bcryptjs');
-        const bcrypt = bcryptModule.default || bcryptModule;
+        const bcrypt = bcryptModule.hash || bcryptModule.default.hash;
+
+        if (!bcrypt) {
+            throw new Error("Bcrypt hash function not found");
+        }
 
         console.log("Hashing password...");
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
+        // In bcryptjs 3.x, some methods might be simplified or changed
+        // Using the same salt generation as before but ensuring function availability
+        const genSalt = bcryptModule.genSalt || bcryptModule.default.genSalt;
+        const salt = await genSalt(10);
+        const hashedPassword = await (bcryptModule.hash || bcryptModule.default.hash)(password, salt);
 
         const user = await User.create({
             name,
-            email,
+            email: email.toLowerCase(),
             password: hashedPassword,
-            planType: planType || 'basic' // Save the selected plan (or default)
+            planType: planType || 'basic'
         });
 
         console.log("User created:", user._id);
@@ -63,7 +78,7 @@ export async function POST(req) {
             email: user.email,
             id: user._id.toString(),
             name: user.name,
-            isPaid: false // New users are not paid initially
+            isPaid: false
         })
             .setProtectedHeader({ alg: 'HS256' })
             .setIssuedAt()
@@ -81,40 +96,39 @@ export async function POST(req) {
 
         // --- Enviar Correo de Bienvenida ---
         try {
-            console.log("Configuring email transporter...");
-            const nodemailer = await import('nodemailer');
-            const transporter = nodemailer.createTransport({
-                service: 'gmail', // O configura host/port si usas otro
-                auth: {
-                    user: process.env.EMAIL_USER,
-                    pass: process.env.EMAIL_PASS
-                }
-            });
-
-            const mailOptions = {
-                from: process.env.EMAIL_USER,
-                to: email,
-                subject: '¡Bienvenido a Einflix!',
-                html: `
-                    <div style="font-family: Arial, sans-serif; color: #333;">
-                        <h1 style="color: #E50914;">Bienvenido a Einflix</h1>
-                        <p>Hola <strong>${name}</strong>,</p>
-                        <p>Gracias por registrarte en nuestra plataforma.</p>
-                        <p>Tus credenciales de acceso son:</p>
-                        <ul>
-                            <li><strong>Email:</strong> ${email}</li>
-                            <li><strong>Contraseña:</strong> (La que definiste al registrarte)</li>
-                        </ul>
-                        <p>Disfruta del mejor contenido en streaming.</p>
-                        <br>
-                        <p>Atentamente,<br>El equipo de Einflix</p>
-                    </div>
-                `
-            };
-
             if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+                console.log("Configuring email transporter...");
+                const nodemailer = (await import('nodemailer')).default;
+                const transporter = nodemailer.createTransport({
+                    service: 'gmail',
+                    auth: {
+                        user: process.env.EMAIL_USER,
+                        pass: process.env.EMAIL_PASS
+                    }
+                });
+
+                const mailOptions = {
+                    from: process.env.EMAIL_USER,
+                    to: email,
+                    subject: '¡Bienvenido a Einflix!',
+                    html: `
+                        <div style="font-family: Arial, sans-serif; color: #333;">
+                            <h1 style="color: #E50914;">Bienvenido a Einflix</h1>
+                            <p>Hola <strong>${name}</strong>,</p>
+                            <p>Gracias por registrarte en nuestra plataforma.</p>
+                            <p>Tus credenciales de acceso son:</p>
+                            <ul>
+                                <li><strong>Email:</strong> ${email}</li>
+                                <li><strong>Contraseña:</strong> (La que definiste al registrarte)</li>
+                            </ul>
+                            <p>Disfruta del mejor contenido en streaming.</p>
+                            <br>
+                            <p>Atentamente,<br>El equipo de Einflix</p>
+                        </div>
+                    `
+                };
+
                 console.log("Sending welcome email...");
-                // Don't await email, send in background to speed up response
                 transporter.sendMail(mailOptions).catch(err => console.error("Email send async fail:", err));
                 console.log("Email queued.");
             } else {
@@ -123,13 +137,15 @@ export async function POST(req) {
 
         } catch (emailError) {
             console.error("Error sending email:", emailError);
-            // No fallamos el registro si el correo falla, solo lo logueamos
         }
 
         return response;
 
     } catch (error) {
-        console.error("Register Error:", error);
+        console.error("Register Error Details:", {
+            message: error.message,
+            stack: error.stack
+        });
         return jsonResponse(
             { success: false, message: "Error al registrar usuario: " + error.message },
             500

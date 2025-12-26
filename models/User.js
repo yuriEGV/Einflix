@@ -51,9 +51,15 @@ const UserSchema = new mongoose.Schema({
 
 // Método para comparar contraseñas
 UserSchema.methods.comparePassword = async function (candidatePassword) {
-    // Importación dinámica para evitar problemas de contexto
-    const bcrypt = await import('bcryptjs');
-    return await bcrypt.compare(candidatePassword, this.password);
+    try {
+        const bcrypt = await import('bcryptjs');
+        const compare = bcrypt.compare || bcrypt.default.compare;
+        if (!compare) throw new Error('Bcrypt compare function not found');
+        return await compare(candidatePassword, this.password);
+    } catch (err) {
+        console.error('[User Model] Error comparing password:', err);
+        throw err;
+    }
 };
 
 export default mongoose.models.User || mongoose.model('User', UserSchema);
