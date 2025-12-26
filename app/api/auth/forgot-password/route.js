@@ -76,8 +76,15 @@ export async function POST(req) {
 
     } catch (error) {
         console.error("Forgot Password Error:", error);
+
+        let userMessage = "Error al procesar la solicitud: " + error.message;
+        if (error.message.includes('Authentication failed') || error.code === 'EAUTH') {
+            userMessage = "Error de configuración de correo (bad auth). Por favor, contacta al administrador.";
+            console.error("CRITICAL: EMAIL_USER or EMAIL_PASS is invalid/expired in environment variables.");
+        }
+
         return jsonResponse(
-            { success: false, message: "Error al procesar la solicitud: " + error.message },
+            { success: false, message: userMessage },
             500
         );
     }

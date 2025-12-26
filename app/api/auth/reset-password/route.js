@@ -31,8 +31,16 @@ export async function POST(req) {
         }
 
         // Hashear la nueva contraseña
-        const salt = await bcrypt.genSalt(10);
-        user.password = await bcrypt.hash(password, salt);
+        const bcryptModule = await import('bcryptjs');
+        const hash = bcryptModule.hash || bcryptModule.default.hash;
+        const genSalt = bcryptModule.genSalt || bcryptModule.default.genSalt;
+
+        if (!hash || !genSalt) {
+            throw new Error("Bcrypt functions not found");
+        }
+
+        const salt = await genSalt(10);
+        user.password = await hash(password, salt);
 
         // Limpiar campos de reset
         user.resetToken = undefined;
@@ -46,7 +54,10 @@ export async function POST(req) {
         });
 
     } catch (error) {
-        console.error("Reset Password Error:", error);
-        return jsonResponse({ success: false, message: "Error al restablecer la contraseña" }, 500);
+        console.error("Reset Password Error Details:", {
+            message: error.message,
+            stack: error.stack
+        });
+        return jsonResponse({ success: false, message: "Error al restablecer la contraseña: " + error.message }, 500);
     }
 }
