@@ -96,6 +96,9 @@ export default function GalleryPage() {
     }
 
     const handleLogout = async () => {
+        if (!window.confirm("¿Estás seguro que deseas cerrar sesión?")) {
+            return;
+        }
         try {
             await fetch('/api/auth/logout', { method: 'POST' });
             router.push('/register');
