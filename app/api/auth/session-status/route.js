@@ -8,7 +8,7 @@ export async function GET(req) {
     try {
         const token = req.cookies.get('session_token')?.value;
         if (!token) {
-            return new Response(JSON.stringify({ active: false }), {
+            return new Response(JSON.stringify({ active: false, reason: 'token_missing' }), {
                 status: 200,
                 headers: {
                     'Content-Type': 'application/json',
@@ -24,7 +24,8 @@ export async function GET(req) {
             const verified = await jwtVerify(token, secret);
             payload = verified.payload;
         } catch (e) {
-            return new Response(JSON.stringify({ active: false }), {
+            console.error("JWT Verification Failed:", e.message);
+            return new Response(JSON.stringify({ active: false, reason: 'token_invalid' }), {
                 status: 200,
                 headers: {
                     'Content-Type': 'application/json',
