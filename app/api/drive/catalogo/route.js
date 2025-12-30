@@ -173,7 +173,8 @@ export async function GET(req) {
             category = category.charAt(0).toUpperCase() + category.slice(1);
 
             // Thumbnail inteligente para evitar bloqueos CORB (Cross-Origin Read Blocking)
-            let thumbnail = item.cover || `https://lh3.googleusercontent.com/u/0/d/${id}=w800-iv1`;
+            // Fix: Usar /d/ en lugar de /u/0/d/ para evitar depender de la sesión del navegador
+            let thumbnail = item.cover || `https://lh3.googleusercontent.com/d/${id}=w800`;
 
             // Si la URL es la de thumbnail estándar de drive, preferimos el proxy lh3 o una temática
             if (thumbnail.includes('drive.google.com/thumbnail') || thumbnail.includes('drive.google.com/drive')) {
@@ -187,9 +188,9 @@ export async function GET(req) {
                     }
                 }
 
-                // Si no hay temática, usamos el visor directo de thumbnails de alta calidad
+                // Si no hay temática, usamos el visor directo
                 if (!foundThematic && id) {
-                    thumbnail = `https://lh3.googleusercontent.com/u/0/d/${id}=w800-iv1`;
+                    thumbnail = `https://lh3.googleusercontent.com/d/${id}=w800`;
                 }
             }
 
