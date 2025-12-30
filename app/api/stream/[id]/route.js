@@ -42,16 +42,10 @@ export async function GET(req, { params }) {
                 const parts = line.split('|').map(p => p.trim());
                 const urlOrId = parts[0];
 
-                // Check if ID matches
-                // For Drive links, the ID is within the URL
-                // We support both "local-1" and "1RV9z..."
-
                 if (urlOrId === id || urlOrId.includes(id)) {
-                    // Determine type
                     let type = parts[7];
                     let storageKey = parts[6];
 
-                    // If it's a Drive link and we have an ID match
                     if (!type && !urlOrId.startsWith('local-')) {
                         type = 'drive';
                         // StorageKey for Drive is the ID itself
@@ -71,7 +65,6 @@ export async function GET(req, { params }) {
     }
 
     if (!targetItem) {
-        // Fallback: Check if the ID itself looks like a Drive ID
         if (id.match(/^[-\w]{25,}$/)) {
             targetItem = {
                 type: 'drive',
@@ -85,10 +78,11 @@ export async function GET(req, { params }) {
         return new NextResponse('Content not found', { status: 404 });
     }
 
-    // 3. Serve Video Stream
+    // 3. Serve Video Stream or Redirect
     try {
         if (!targetItem.isLocal) {
-            // PROXY STREAMING FOR DRIVE
+            // DIRECT REDIRECT FOR DRIVE (Optimization for Vercel Limits)
+            // Instead of proxying, we redirect users directly to Google Drive.
             const driveId = targetItem.storageKey || id;
             const apiKey = process.env.GOOGLE_API_KEY;
 
@@ -99,35 +93,8 @@ export async function GET(req, { params }) {
 
             const driveUrl = `https://www.googleapis.com/drive/v3/files/${driveId}?alt=media&key=${apiKey}`;
 
-            // Forward headers (especially Range)
-            const fetchHeaders = {};
-            if (req.headers.get('range')) {
-                fetchHeaders['Range'] = req.headers.get('range');
-            }
-
-            const driveRes = await fetch(driveUrl, { headers: fetchHeaders });
-
-            if (!driveRes.ok) {
-                console.error(`Drive API Error: ${driveRes.status} ${driveRes.statusText}`);
-                return new NextResponse('Upstream Error', { status: driveRes.status });
-            }
-
-            // Create response with Drive's headers
-            const resHeaders = new Headers();
-            // Force video/mp4 for player compatibility even if Drive says otherwise
-            resHeaders.set('Content-Type', 'video/mp4');
-            resHeaders.set('Content-Length', driveRes.headers.get('Content-Length'));
-            if (driveRes.headers.get('Content-Range')) {
-                resHeaders.set('Content-Range', driveRes.headers.get('Content-Range'));
-            }
-            if (driveRes.headers.get('Accept-Ranges')) {
-                resHeaders.set('Accept-Ranges', driveRes.headers.get('Accept-Ranges'));
-            }
-
-            return new NextResponse(driveRes.body, {
-                status: driveRes.status,
-                headers: resHeaders
-            });
+            // 307 Temporary Redirect
+            return NextResponse.redirect(driveUrl);
 
         } else {
             // LOCAL FILE STREAMING

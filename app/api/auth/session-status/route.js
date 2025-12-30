@@ -48,9 +48,21 @@ export async function GET(req) {
         await dbConnect();
         const user = await User.findById(payload.id);
 
-        if (!user || user.activeSessionId !== payload.sessionId) {
-            console.warn(`[SessionStatus] Invalidation detected for ${payload.email}. DB: ${user?.activeSessionId} vs Token: ${payload.sessionId}`);
-            return new Response(JSON.stringify({ active: false }), {
+        if (!user) {
+            console.warn(`[SessionStatus] User not found for ID: ${payload.id}`);
+            return new Response(JSON.stringify({ active: false, reason: 'user_not_found' }), {
+                status: 200,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+                    'Pragma': 'no-cache'
+                }
+            });
+        }
+
+        if (user.activeSessionId !== payload.sessionId) {
+            console.warn(`[SessionStatus] Mismatch for ${user.email}. DB: ${user.activeSessionId} vs Token: ${payload.sessionId}`);
+            return new Response(JSON.stringify({ active: false, reason: 'session_mismatch' }), {
                 status: 200,
                 headers: {
                     'Content-Type': 'application/json',

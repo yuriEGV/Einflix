@@ -44,7 +44,9 @@ export default function InactivityTracker({ children }) {
                 const res = await fetch('/api/auth/session-status');
                 const data = await res.json();
                 if (data.active === false) {
-                    console.warn('[Heartbeat] Session invalidated, logging out...');
+                    console.warn(`[Heartbeat] Session invalidated (${data.reason || 'unknown'}), logging out...`);
+                    // If no_session_id, it means cookie might be lost or format old.
+                    // If session_mismatch, it means logged in elsewhere.
                     logout();
                 }
             } catch (e) {
