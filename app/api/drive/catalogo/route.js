@@ -100,8 +100,16 @@ export async function GET(req) {
                 const fileItems = lines.map(line => {
                     const parts = line.split('|').map(p => p.trim());
                     const url = parts[0] || '';
-                    const idMatch = url.match(/[-\w]{25,}/);
-                    const id = idMatch ? idMatch[0] : null;
+
+                    let id = null;
+                    // Support for local native content
+                    if (url.startsWith('local-')) {
+                        id = url;
+                    } else {
+                        // Support for Google Drive links
+                        const idMatch = url.match(/[-\w]{25,}/);
+                        id = idMatch ? idMatch[0] : null;
+                    }
 
                     if (!id) return null;
 
@@ -112,7 +120,15 @@ export async function GET(req) {
                         tags: parts[2] ? [parts[2]] : [defaultCategory],
                         cover: parts[3] || null,
                         description: parts[4] || 'Sin descripción disponible.',
-                        folderUrl: url
+                        folderUrl: url,
+                        // Native Streaming Support:
+                        // If it's a folder, it's 'drive' (iframe). 
+                        // If it's a file (and not explicitly 'drive'), we try to stream it.
+                        contentType: parts[7] || (
+                            url.includes('/folders/') || url.includes('embeddedfolderview')
+                                ? 'drive'
+                                : 'mp4' // Require native player for files
+                        )
                     };
                 }).filter(Boolean);
 

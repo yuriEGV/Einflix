@@ -220,15 +220,27 @@ export default function GalleryPage() {
                                     </div>
                                 </div>
                             ) : (
-                                <iframe
-                                    src={active.type === 'folder_fallback'
-                                        ? `https://drive.google.com/embeddedfolderview?id=${active.id}#grid`
-                                        : active.preview}
-                                    title={active.title}
-                                    allow="autoplay; fullscreen"
-                                    allowFullScreen
-                                    sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-presentation allow-storage-access-by-user-activation"
-                                />
+                                active.contentType === 'mp4' ? (
+                                    <video
+                                        controls
+                                        autoPlay
+                                        className="native-player"
+                                        src={`/api/stream/${active.id}`}
+                                        style={{ width: '100%', height: '100%', backgroundColor: 'black' }}
+                                    >
+                                        Tu navegador no soporta el elemento de video.
+                                    </video>
+                                ) : (
+                                    <iframe
+                                        src={active.type === 'folder_fallback'
+                                            ? `https://drive.google.com/embeddedfolderview?id=${active.id}#grid`
+                                            : active.preview}
+                                        title={active.title}
+                                        allow="autoplay; fullscreen"
+                                        allowFullScreen
+                                        sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-presentation allow-storage-access-by-user-activation"
+                                    />
+                                )
                             )}
                         </div>
 

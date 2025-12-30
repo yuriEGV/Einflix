@@ -1,0 +1,5 @@
+This is a dummy video file for testing the native streaming capability of Einflix.
+It is not a real video, but it serves to verify:
+1. File existence check.
+2. Range request headers (206 Partial Content).
+3. Secure streaming endpoint access.
