@@ -173,10 +173,10 @@ export async function GET(req) {
             category = category.charAt(0).toUpperCase() + category.slice(1);
 
             // Thumbnail inteligente para evitar bloqueos CORB (Cross-Origin Read Blocking)
-            // Fix: Usar /d/ en lugar de /u/0/d/ para evitar depender de la sesión del navegador
-            let thumbnail = item.cover || `https://lh3.googleusercontent.com/d/${id}=w800`;
+            // Fix: Usar proxy local para evitar problemas de CORS en el frontend
+            let thumbnail = item.cover || `/api/drive/thumbnail?id=${id}`;
 
-            // Si la URL es la de thumbnail estándar de drive, preferimos el proxy lh3 o una temática
+            // Si la URL es la de thumbnail estándar de drive, preferimos el proxy o una temática
             if (thumbnail.includes('drive.google.com/thumbnail') || thumbnail.includes('drive.google.com/drive')) {
                 const lowTags = tags.map(t => t.toLowerCase());
                 let foundThematic = false;
@@ -188,9 +188,9 @@ export async function GET(req) {
                     }
                 }
 
-                // Si no hay temática, usamos el visor directo
+                // Si no hay temática, usamos el proxy
                 if (!foundThematic && id) {
-                    thumbnail = `https://lh3.googleusercontent.com/d/${id}=w800`;
+                    thumbnail = `/api/drive/thumbnail?id=${id}`;
                 }
             }
 

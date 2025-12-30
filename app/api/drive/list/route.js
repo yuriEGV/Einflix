@@ -35,7 +35,7 @@ export async function GET(req) {
             id: file.id,
             title: file.name,
             type: file.mimeType === 'application/vnd.google-apps.folder' ? 'folder' : 'video',
-            thumbnail: file.thumbnailLink?.replace('=s220', '=s800') || `https://lh3.googleusercontent.com/u/0/d/${file.id}=w800-iv1`,
+            thumbnail: file.thumbnailLink?.replace('=s220', '=s800') || `/api/drive/thumbnail?id=${file.id}`,
             original: file.webViewLink,
             preview: file.mimeType === 'application/vnd.google-apps.folder'
                 ? `/api/drive/list?id=${file.id}`

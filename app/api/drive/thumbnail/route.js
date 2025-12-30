@@ -10,14 +10,15 @@ export async function GET(req) {
         return new Response('Missing ID', { status: 400 });
     }
 
-    // URL de miniatura de Google Drive
-    const driveUrl = `https://lh3.googleusercontent.com/u/0/d/${id}=w600-h400-n`;
+    // Use /d/ format which is more reliable for direct access and proxies
+    const driveUrl = `https://lh3.googleusercontent.com/d/${id}=w800`;
 
     try {
         const response = await fetch(driveUrl);
 
         if (!response.ok) {
-            throw new Error('Failed to fetch from Drive');
+            // Try fallback to Unsplash if Drive fails
+            throw new Error(`Failed to fetch from Drive: ${response.status}`);
         }
 
         const blob = await response.blob();
