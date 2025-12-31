@@ -144,6 +144,42 @@ export async function GET(req) {
             }
         }
 
+        // --- DEEP SEARCH (Google Drive API) ---
+        // Only if query is present, search for actual files in the Drive
+        if (query && query.length > 2) {
+            try {
+                const { getDriveClient } = await import('@/lib/drive');
+                const drive = await getDriveClient();
+
+                if (drive) {
+                    // Search for files with name containing query, not trashed, and is video
+                    const driveRes = await drive.files.list({
+                        q: `name contains '${query}' and mimeType contains 'video/' and trashed = false`,
+                        fields: 'files(id, name, mimeType, thumbnailLink, webViewLink, iconLink)',
+                        pageSize: 20
+                    });
+
+                    const driveFiles = driveRes.data.files || [];
+
+                    driveFiles.forEach(file => {
+                        results.push({
+                            id: file.id,
+                            title: file.name,
+                            category: 'Resultado de Drive', // Distinct category for deep search
+                            description: 'Archivo encontrado en el almacenamiento.',
+                            type: 'video',
+                            original: file.webViewLink,
+                            preview: `https://drive.google.com/file/d/${file.id}/preview`,
+                            thumbnail: `/api/drive/thumbnail?id=${file.id}` // Always proxy
+                        });
+                    });
+                }
+            } catch (driveErr) {
+                console.error("Deep Search Drive Error:", driveErr.message);
+                // Do not fail the whole request, just proceed with local results
+            }
+        }
+
         // Deduplicate
         const seen = new Set();
         results = results.filter(item => {

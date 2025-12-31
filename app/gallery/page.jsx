@@ -81,9 +81,6 @@ export default function GalleryPage() {
                         </svg>
                     </button>
 
-                    {/* DEBUG: Force visible link */}
-                    <span style={{ color: 'red', fontWeight: 'bold', marginRight: '10px' }}>SEARCH TEST</span>
-
                     <button
                         onClick={handleLogout}
                         className="btn"
@@ -95,7 +92,7 @@ export default function GalleryPage() {
                             cursor: 'pointer',
                         }}
                     >
-                        SALIR AHORA
+                        Cerrar Sesión
                     </button>
                 </div>
             </header>
