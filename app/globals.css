@@ -199,13 +199,12 @@ h6 {
   right: 0;
   background: linear-gradient(transparent, rgba(0, 0, 0, 0.9));
   padding: 0.5rem;
-  opacity: 0;
+  opacity: 1;
   transition: opacity 0.3s;
 }
 
-.card:hover .card-info {
-  opacity: 1;
-}
+/* Removed hover effect to keep titles always visible */
+/* .card:hover .card-info { opacity: 1; } */
 
 .badge {
   font-size: 0.7rem;
