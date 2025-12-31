@@ -199,7 +199,7 @@ h6 {
   right: 0;
   background: linear-gradient(transparent, rgba(0, 0, 0, 0.9));
   padding: 0.5rem;
-  opacity: 1;
+  opacity: 1 !important;
   transition: opacity 0.3s;
 }
 

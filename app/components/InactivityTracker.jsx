@@ -47,7 +47,8 @@ export default function InactivityTracker({ children }) {
                     console.warn(`[Heartbeat] Session invalidated (${data.reason || 'unknown'}), logging out...`);
                     // If no_session_id, it means cookie might be lost or format old.
                     // If session_mismatch, it means logged in elsewhere.
-                    logout();
+                    console.warn(`[Heartbeat] Session invalidated (${data.reason || 'unknown'}). Logout suppressed for debugging.`);
+                    // logout(); // Temporarily disabled to prevent loops
                 }
             } catch (e) {
                 console.error('[Heartbeat] Check failed', e);
