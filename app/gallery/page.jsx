@@ -57,23 +57,26 @@ export default function GalleryPage() {
         <main>
             <header className={`header ${scrolled ? 'scrolled' : ''}`} style={{ zIndex: 110 }}>
                 <h1 style={{ color: 'var(--netflix-red)', margin: 0 }}>EINFLIX</h1>
-                <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '20px' }}>
+                <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '15px' }}>
                     {/* Search Icon */}
                     <button
                         onClick={() => router.push('/search')}
                         aria-label="Buscar"
                         style={{
-                            background: 'transparent',
-                            border: 'none',
+                            background: 'rgba(255,255,255,0.2)',
+                            border: '1px solid rgba(255,255,255,0.4)',
+                            borderRadius: '50%',
                             color: 'white',
                             cursor: 'pointer',
-                            padding: '8px',
+                            width: '40px',
+                            height: '40px',
                             display: 'flex',
                             alignItems: 'center',
-                            justifyContent: 'center'
+                            justifyContent: 'center',
+                            transition: 'background 0.3s'
                         }}
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                         </svg>
                     </button>
