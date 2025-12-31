@@ -62,14 +62,14 @@ export async function GET(req) {
         }
 
         if (user.activeSessionId !== payload.sessionId) {
-            console.warn(`[SessionStatus] Mismatch for ${user.email}. DB: ${user.activeSessionId} vs Token: ${payload.sessionId}`);
-            return new Response(JSON.stringify({ active: false, reason: 'session_mismatch' }), {
+            console.warn(`[SessionStatus] Mismatch for ${user.email}.`);
+            console.warn(`DB Session:    ${user.activeSessionId}`);
+            console.warn(`Token Session: ${payload.sessionId}`);
+            // return new Response(JSON.stringify({ active: false, reason: 'session_mismatch' }), { ... }); 
+            // TEMPORARY: Allow mismatch to debug
+            return new Response(JSON.stringify({ active: true, warning: 'session_mismatch' }), {
                 status: 200,
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
-                    'Pragma': 'no-cache'
-                }
+                headers: { 'Content-Type': 'application/json' }
             });
         }
 

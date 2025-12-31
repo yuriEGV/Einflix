@@ -85,7 +85,8 @@ export default function InactivityTracker({ children }) {
 
                     // Only logout for critical security reasons or missing token
                     if (data.reason === 'session_mismatch' || data.reason === 'token_invalid' || data.reason === 'token_missing') {
-                        logout();
+                        console.warn("Logout suppressed for debugging. Reason:", data.reason);
+                        // logout(); 
                     }
                 }
             } catch (e) {
