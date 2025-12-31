@@ -36,7 +36,7 @@ export async function GET(req) {
             title: file.name,
             type: file.mimeType === 'application/vnd.google-apps.folder' ? 'folder' : 'video',
             // Use local proxy for thumbnails
-            thumbnail: file.thumbnailLink?.replace('=s220', '=s800') || `/api/drive/thumbnail?id=${file.id}`,
+            thumbnail: `/api/drive/thumbnail?id=${file.id}`,
             original: file.webViewLink,
             preview: file.mimeType === 'application/vnd.google-apps.folder'
                 ? `/api/drive/list?id=${file.id}`

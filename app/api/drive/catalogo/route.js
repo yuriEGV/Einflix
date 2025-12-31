@@ -177,7 +177,7 @@ export async function GET(req) {
             let thumbnail = item.cover || `/api/drive/thumbnail?id=${id}`;
 
             // Si la URL es la de thumbnail estándar de drive, preferimos el proxy o una temática
-            if (thumbnail.includes('drive.google.com/thumbnail') || thumbnail.includes('drive.google.com/drive')) {
+            if (thumbnail.includes('drive.google.com') || thumbnail.includes('googleusercontent.com')) {
                 const lowTags = tags.map(t => t.toLowerCase());
                 let foundThematic = false;
                 for (const [key, url] of Object.entries(categoryImages)) {

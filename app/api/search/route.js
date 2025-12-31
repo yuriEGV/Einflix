@@ -113,7 +113,7 @@ export async function GET(req) {
 
                     let thumbnail = parts[3] || `/api/drive/thumbnail?id=${id}`;
                     // Thematic fallback
-                    if (thumbnail.includes('drive.google.com')) {
+                    if (thumbnail.includes('drive.google.com') || thumbnail.includes('googleusercontent.com')) {
                         const lowTags = tags.map(t => t.toLowerCase());
                         let foundThematic = false;
                         for (const [key, tUrl] of Object.entries(categoryImages)) {
