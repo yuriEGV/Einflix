@@ -2,8 +2,11 @@ import dbConnect from '@/lib/mongodb';
 import User from '@/models/User';
 import { jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
+import path from 'path'; // Added import for 'path'
 
 const SECRET_KEY = process.env.JWT_SECRET || 'einflix_super_secret_key_2024';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(req) {
     try {

@@ -2,6 +2,8 @@ import { jwtVerify } from 'jose';
 import { getDriveClient, decryptId } from '@/lib/drive';
 import { isRateLimited } from '@/lib/rateLimit';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req, { params }) {
     // Basic Rate Limit
     const ip = req.headers.get('x-forwarded-for') || 'local';

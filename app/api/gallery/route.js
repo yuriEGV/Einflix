@@ -2,9 +2,11 @@ import fs from 'fs/promises';
 import path from 'path';
 import { toDriveViewUrl, toDrivePreviewUrl, guessTypeFromUrl } from '../../../lib/drive';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req) {
     try {
-        const filePath = path.join(process.cwd(), 'data', 'drive_links.txt');
+        const filePath = path.join(process.cwd(), 'data', 'total G', 'drive_links.txt');
         const raw = await fs.readFile(filePath, 'utf8');
         const lines = raw.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
 
