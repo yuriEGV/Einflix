@@ -1,4 +1,4 @@
-import { getDriveClient, decryptId } from '@/lib/drive';
+import { getAllDriveClients, decryptId } from '@/lib/drive';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,72 +14,64 @@ export async function GET(req, { params }) {
     const id = decryptId(encryptedId);
 
     try {
-        const drive = await getDriveClient();
-        if (!drive) {
+        const clients = await getAllDriveClients();
+        if (clients.length === 0) {
             console.error("❌ Drive client not initialized - check GOOGLE_APPLICATION_CREDENTIALS");
             return new Response(null, { status: 302, headers: { Location: FALLBACK_IMAGE_URL } });
         }
 
-        // Fetch image as stream
-        const response = await drive.files.get(
-            { fileId: id, alt: 'media', acknowledgeAbuse: true },
-            { responseType: 'stream' }
-        );
+        let mediaResponse = null;
+        let successfulClient = null;
+
+        // Try sequentially across all available accounts
+        for (const client of clients) {
+            try {
+                // Fetch image as stream
+                mediaResponse = await client.instance.files.get(
+                    { fileId: id, alt: 'media', acknowledgeAbuse: true },
+                    { responseType: 'stream' }
+                );
+                successfulClient = client;
+                break;
+            } catch (e) {
+                // Log only if not found/not downloadable
+                const isSilentError = e.code === 404 || e.message?.includes('fileNotDownloadable');
+                if (!isSilentError) {
+                    console.warn(`⚠️ [Poster] ${client.source} failed for ${id}: ${e.message}`);
+                }
+            }
+        }
+
+        if (!mediaResponse) {
+            return new Response(null, { status: 302, headers: { Location: FALLBACK_IMAGE_URL } });
+        }
 
         const headers = new Headers();
-        headers.set('Content-Type', response.headers['content-type'] || 'image/jpeg');
+        headers.set('Content-Type', mediaResponse.headers['content-type'] || 'image/jpeg');
         headers.set('Cache-Control', 'public, max-age=604800, immutable'); // Cache 7 days
         headers.set('Access-Control-Allow-Origin', '*');
+        headers.set('X-Drive-Source', successfulClient.source);
 
-        const nodeStream = response.data;
+        const nodeStream = mediaResponse.data;
         let isCancelled = false;
 
         const webStream = new ReadableStream({
             start(controller) {
                 nodeStream.on('data', (chunk) => {
                     if (!isCancelled) {
-                        try {
-                            controller.enqueue(chunk);
-                        } catch (e) {
-                            isCancelled = true;
-                            nodeStream.destroy();
-                        }
+                        try { controller.enqueue(chunk); }
+                        catch (e) { isCancelled = true; nodeStream.destroy(); }
                     }
                 });
-                nodeStream.on('end', () => {
-                    if (!isCancelled) {
-                        try {
-                            controller.close();
-                        } catch (e) { }
-                    }
-                });
-                nodeStream.on('error', (err) => {
-                    if (!isCancelled) {
-                        try {
-                            controller.error(err);
-                        } catch (e) { }
-                    }
-                });
+                nodeStream.on('end', () => { if (!isCancelled) { try { controller.close(); } catch (e) { } } });
+                nodeStream.on('error', (err) => { if (!isCancelled) { try { controller.error(err); } catch (e) { } } });
             },
-            cancel() {
-                isCancelled = true;
-                nodeStream.destroy();
-            }
+            cancel() { isCancelled = true; nodeStream.destroy(); }
         });
 
         return new Response(webStream, { headers });
 
     } catch (error) {
-        // Suppress logs for expected errors (like folders which are not downloadable, or deleted/inaccessible files)
-        const errorMsg = JSON.stringify(error);
-        const isNotDownloadable = errorMsg.includes('fileNotDownloadable') || error.message?.includes('fileNotDownloadable');
-        const isNotFound = error.code === 404 || errorMsg.includes('File not found') || error.message?.includes('File not found');
-
-        if (!isNotDownloadable && !isNotFound) {
-            console.error('Poster Proxy Error:', error.message || error);
-        }
-
-        // If quota exceeded, not downloadable (folder), or not found, redirect to fallback
         return new Response(null, { status: 302, headers: { Location: FALLBACK_IMAGE_URL } });
     }
 }
