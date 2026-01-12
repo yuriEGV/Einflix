@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
 import { jwtVerify } from 'jose';
+import { cookies } from 'next/headers';
+import { encryptId } from '@/lib/drive';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,14 +11,8 @@ const SECRET_KEY = process.env.JWT_SECRET || 'einflix_super_secret_key_2024';
 
 export async function GET(req) {
     try {
-        // 1. Obtener User Plan del Token (o DB si queremos data fresca, pero Token es más rápido)
-        // Para cambios inmediatos mejor consultar DB si el token puede estar desactualizado, 
-        // pero por eficiencia usaremos el token o asumiremos que el frontend refresca el token al pagar.
-        // DADO que el callback redirige, el cliente DEBERIA refrescar su sesión/token, 
-        // pero Next.js App Router a veces mantiene cookies viejas.
-        // Vamos a leer la cookie directamente.
-
-        const token = req.cookies.get('session_token')?.value;
+        const cookieStore = cookies();
+        const token = cookieStore.get('session_token')?.value;
         let planType = 'none';
 
         if (token) {
@@ -59,22 +55,52 @@ export async function GET(req) {
         }
 
         const dataDir = path.join(process.cwd(), 'data');
-        let allowedFiles = [];
+        let planFolder = 'basic'; // Default fallback
 
-        console.log(`CATALOG FILTER: Effective Plan: ${planType}`);
+        // 2. Definir acceso por Plan o Cuenta Especial
+        const specialAccounts = ['yguajardov@gmail.com', 'vicente@einflix.com'];
 
-        // 2. Definir acceso por Plan
-        if (planType === 'total') {
-            allowedFiles = ['peliculas.txt', 'series.txt', 'comics.txt', 'musica.txt', 'karaoke.txt', 'libros.txt', 'otros.txt'];
-        } else if (planType === 'medium') {
-            allowedFiles = ['peliculas.txt', 'series.txt'];
-        } else if (planType === 'basic') {
-            allowedFiles = ['libros.txt'];
-        } else {
-            allowedFiles = [];
+        let userEmail = '';
+        if (token) {
+            try {
+                const secret = new TextEncoder().encode(SECRET_KEY);
+                const { payload } = await jwtVerify(token, secret);
+                const User = (await import('@/models/User')).default;
+                const dbConnect = (await import('@/lib/mongodb')).default;
+                await dbConnect();
+
+                if (payload.id) {
+                    const user = await User.findById(payload.id);
+                    if (user) {
+                        userEmail = user.email;
+                        if (specialAccounts.includes(user.email)) {
+                            planFolder = 'total G';
+                            console.log(`CATALOG: Admin access for ${user.email} -> total G`);
+                        } else if (user.isPaid) {
+                            const type = (user.planType || 'basic').toLowerCase();
+                            if (type.includes('total')) planFolder = 'total P';
+                            else if (type.includes('medium')) planFolder = 'medium';
+                            else planFolder = 'basic';
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error("Error identifying user for catalog folder selection:", e);
+            }
         }
 
-        console.log(`CATALOG FILTER: Allowed Files: ${JSON.stringify(allowedFiles)}`);
+        const planDir = path.join(dataDir, planFolder);
+        console.log(`CATALOG CONFIG: Assigned folder -> ${planFolder}`);
+
+        let allowedFiles = [];
+        if (fs.existsSync(planDir)) {
+            const files = fs.readdirSync(planDir);
+            allowedFiles = files.filter(f => f.endsWith('.txt') || f.endsWith('.json'));
+        } else {
+            console.error(`CATALOG ERROR: Plan directory not found: ${planDir}`);
+        }
+
+        console.log(`CATALOG DEBUG: Processing ${allowedFiles.length} files from ${planFolder}`);
 
         const fileCategories = {
             'peliculas.txt': 'Película',
@@ -83,56 +109,155 @@ export async function GET(req) {
             'musica.txt': 'Música',
             'karaoke.txt': 'Karaoke',
             'libros.txt': 'Libro',
-            'otros.txt': 'Otros'
+            'otros.txt': 'Otros',
+            'CLASICOS.txt': 'Clásicos',
+            'Religiosas.txt': 'Religiosas',
+            'Series Animadas.txt': 'Series Animadas',
+            'South Park.txt': 'South Park',
+            'Los Magnificos.txt': 'Serie Clásica',
+            'Los Monster.txt': 'Serie Clásica',
+            'Los Tres Chiflados.txt': 'Humor',
+            'Mi Bella Genio.txt': 'Serie Clásica',
+            'Series de Terror.txt': 'Terror',
+            'Super Agente 86.txt': 'Serie Clásica'
         };
 
         let rawItems = [];
 
-        for (const [filename, defaultCategory] of Object.entries(fileCategories)) {
-            // Filter: Only process if filename is in allowedFiles
-            if (!allowedFiles.includes(filename)) continue;
+        for (const filename of allowedFiles) {
+            const defaultCategory = fileCategories[filename] || filename.replace('.txt', '');
+            const filePath = path.join(planDir, filename);
 
-            const filePath = path.join(dataDir, filename);
             if (fs.existsSync(filePath)) {
-                const content = fs.readFileSync(filePath, 'utf8');
-                const lines = content.split('\n').filter(line => line.trim());
+                console.log(`CATALOG: Processing file ${filename} from ${planFolder}`);
 
-                const fileItems = lines.map(line => {
-                    const parts = line.split('|').map(p => p.trim());
-                    const url = parts[0] || '';
+                if (filename === 'CLASICOS.txt') {
+                    console.log(`CATALOG DEBUG: CLASICOS.txt exists at ${filePath}`);
+                }
+                if (filename.endsWith('.txt') && !filename.includes('json')) {
+                    // Standard TXT processing
+                    const content = fs.readFileSync(filePath, 'utf8');
+                    const lines = content.split('\n').filter(line => line.trim());
 
-                    let id = null;
-                    // Support for local native content
-                    if (url.startsWith('local-')) {
-                        id = url;
-                    } else {
-                        // Support for Google Drive links
-                        const idMatch = url.match(/[-\w]{25,}/);
-                        id = idMatch ? idMatch[0] : null;
+                    if (filename === 'CLASICOS.txt') {
+                        console.log(`CATALOG DEBUG: Parsing CLASICOS.txt. Found ${lines.length} lines.`);
                     }
 
-                    if (!id) return null;
+                    const fileItems = lines.map(line => {
+                        const parts = line.split('|').map(p => p.trim());
+                        const url = parts[0] || '';
+
+                        if (filename === 'CLASICOS.txt') {
+                            console.log(`CATALOG DEBUG: Processing line: ${line}`);
+                            console.log(`CATALOG DEBUG: Extracted URL: ${url}, ID Match: ${url.match(/[-\w]{25,}/)}`);
+                        }
+
+                        let id = null;
+                        if (url.startsWith('local-')) {
+                            id = url;
+                        } else {
+                            const idMatch = url.match(/[-\w]{25,}/);
+                            id = idMatch ? idMatch[0] : null;
+                        }
+
+                        if (!id) {
+                            if (filename === 'CLASICOS.txt') console.log(`CATALOG DEBUG: ID NOT FOUND for line in CLASICOS.txt`);
+                            return null;
+                        }
+
+                        // FALLBACK: If title is missing (parts[1]), use the filename (without .txt)
+                        const category = parts[2] || defaultCategory;
+                        const title = parts[1] || defaultCategory;
+
+                        let contentType = 'video';
+                        if (['Libro', 'Comic', 'Biblioteca', 'Galería', 'Lectura', 'Documentos'].includes(category)) contentType = 'pdf';
+                        else if (['Música', 'Karaoke'].includes(category)) contentType = 'audio';
+
+                        // IMPROVED DETECTION: Ensure drive folders are always identified even without parts[7]
+                        const isDriveFolder = url.includes('/folders/') || url.includes('embeddedfolderview');
+
+                        return {
+                            id,
+                            title: title,
+                            tags: [category],
+                            cover: parts[3] || null,
+                            description: parts[4] || 'Sin descripción disponible.',
+                            folderUrl: url,
+                            contentType: parts[7] || (isDriveFolder ? 'drive' : contentType)
+                        };
+                    }).filter(Boolean);
+
+                    if (filename === 'CLASICOS.txt') {
+                        console.log(`CATALOG DEBUG: CLASICOS.txt yielded ${fileItems.length} valid items.`);
+                        if (fileItems.length > 0) {
+                            console.log(`CATALOG DEBUG: First CLASICOS item: ${JSON.stringify(fileItems[0])}`);
+                        }
+                    }
+
+                    rawItems = rawItems.concat(fileItems);
+                } else if (filename.includes('json')) {
+                    // JSON or TXT-JSON processing
+                    try {
+                        const content = fs.readFileSync(filePath, 'utf8');
+                        const jsonData = JSON.parse(content);
+                        const jsonItems = jsonData.map(item => {
+                            const url = item.url || '';
+                            const idMatch = url.match(/[-\w]{25,}/);
+                            const id = idMatch ? idMatch[0] : null;
+                            if (!id) return null;
+
+                            const category = item.categoria || defaultCategory;
+                            let contentType = 'video';
+                            if (['Libro', 'Comic', 'Biblioteca', 'Galería', 'Lectura', 'Documentos'].includes(category)) contentType = 'pdf';
+                            else if (['Música', 'Karaoke'].includes(category)) contentType = 'audio';
+
+                            return {
+                                id,
+                                title: item.titulo || item.categoria || `Contenido ${id.slice(0, 6)}`,
+                                tags: [category],
+                                cover: item.thumbnail || null,
+                                description: item.descripcion || 'Sin descripción disponible.',
+                                folderUrl: url,
+                                contentType: url.includes('/folders/') ? 'drive' : contentType
+                            };
+                        }).filter(Boolean);
+                        rawItems = rawItems.concat(jsonItems);
+                    } catch (e) {
+                        console.error(`Error parsing JSON file ${filename}:`, e);
+                    }
+                }
+            }
+        }
+
+        // --- INTEGRATION: JSON PUBLIC DOMAIN FILMS ---
+        // Always include Public Domain films regardless of plan
+        const jsonPath = path.join(dataDir, 'enflix_public_domain_films.json');
+        if (fs.existsSync(jsonPath)) {
+            try {
+                const jsonContent = fs.readFileSync(jsonPath, 'utf8');
+                const jsonData = JSON.parse(jsonContent);
+
+                const jsonItems = jsonData.map((film, index) => {
+                    const driveId = film.stream_url.match(/[-\w]{25,}/)?.[0];
+                    const safeId = driveId ? encryptId(driveId) : `pd-${index}`;
 
                     return {
-                        id,
-                        title: parts[1] || `Contenido ${id.slice(0, 6)}`,
-                        // Use category from file if tag is missing, otherwise use tag
-                        tags: parts[2] ? [parts[2]] : [defaultCategory],
-                        cover: parts[3] || null,
-                        description: parts[4] || 'Sin descripción disponible.',
-                        folderUrl: url,
-                        // Native Streaming Support:
-                        // If it's a folder, it's 'drive' (iframe). 
-                        // If it's a file (and not explicitly 'drive'), we try to stream it.
-                        contentType: parts[7] || (
-                            url.includes('/folders/') || url.includes('embeddedfolderview')
-                                ? 'drive'
-                                : 'mp4' // Require native player for files
-                        )
+                        id: safeId,
+                        title: film.titulo,
+                        tags: [film.categoria || 'Película', 'Dominio Público'],
+                        cover: film.thumbnail,
+                        thumbnail: `/api/poster/${safeId}`,
+                        description: film.descripcion || `Año: ${film.anio}. ${film.tipo}`,
+                        folderUrl: `/api/stream/${safeId}`,
+                        contentType: 'mp4',
+                        isPublicDomain: true
                     };
-                }).filter(Boolean);
+                });
 
-                rawItems = rawItems.concat(fileItems);
+                rawItems = rawItems.concat(jsonItems);
+                console.log(`CATALOG: Added ${jsonItems.length} public domain films from JSON.`);
+            } catch (err) {
+                console.error("CATALOG: Error parsing public domain JSON:", err);
             }
         }
 
@@ -164,8 +289,10 @@ export async function GET(req) {
             const id = item.id;
             if (!id) return null;
 
-            const isFolder = item.folderUrl ? item.folderUrl.includes('/folders/') : true;
-            const type = isFolder ? 'folder' : 'video';
+            const contentType = item.contentType || 'video';
+            const isFolder = contentType === 'drive' ||
+                (item.folderUrl ? (item.folderUrl.includes('/folders/') || item.folderUrl.includes('embeddedfolderview')) : false);
+            const type = isFolder ? 'folder' : contentType;
 
             // Determinar categoría principal
             const tags = item.tags || [];
@@ -209,7 +336,15 @@ export async function GET(req) {
                     : `https://drive.google.com/file/d/${id}/preview`,
                 thumbnail: thumbnail
             };
-        }).filter(Boolean);
+        }).filter(item => {
+            if (!item) return false;
+            // Filter out items with fallback title "Contenido ..." as requested by user
+            if (item.title && item.title.startsWith('Contenido ')) return false;
+            return true;
+        });
+
+        const clasicosDebug = catalog.find(i => i.title.includes('Clasicos'));
+        console.log("CATALOG DEBUG: Check Clasicos in catalog:", clasicosDebug ? "FOUND" : "NOT FOUND");
 
         // 1. Eliminar duplicados por ID
         const seen = new Set();
@@ -222,7 +357,21 @@ export async function GET(req) {
         // 2. Ordenar alfabéticamente por título
         catalog.sort((a, b) => a.title.localeCompare(b.title));
 
-        return new Response(JSON.stringify(catalog), {
+        // 3. ENCRYPTION & PROXYING PASS
+        const finalCatalog = catalog.map(item => {
+            const safeId = item.id.startsWith('ef-') ? item.id : encryptId(item.id);
+            const isFolder = item.type === 'folder';
+
+            return {
+                ...item,
+                id: safeId,
+                thumbnail: `/api/poster/${safeId}`,
+                original: isFolder ? `/api/drive/list?id=${safeId}` : `/api/stream/${safeId}`,
+                preview: isFolder ? `/api/drive/list?id=${safeId}` : `/api/stream/${safeId}`
+            };
+        });
+
+        return new Response(JSON.stringify(finalCatalog), {
             headers: { 'Content-Type': 'application/json' }
         });
     } catch (error) {

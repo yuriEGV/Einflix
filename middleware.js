@@ -108,6 +108,6 @@ export async function middleware(req) {
 }
 
 export const config = {
-    matcher: ['/((?!api/auth|_next/static|_next/image|favicon.ico).*)'],
+    matcher: ['/((?!api/auth|api/stream|api/drive|api/poster|api/search|_next/static|_next/image|favicon.ico).*)'],
 };
 // Security logic v3.0 - Full Enforcement

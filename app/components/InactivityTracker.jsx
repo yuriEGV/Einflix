@@ -84,9 +84,13 @@ export default function InactivityTracker({ children }) {
                     console.warn(`[Heartbeat] Session invalidated (${data.reason || 'unknown'}).`);
 
                     // Only logout for critical security reasons or missing token
-                    if (data.reason === 'session_mismatch' || data.reason === 'token_invalid' || data.reason === 'token_missing') {
-                        console.warn("Logout suppressed for debugging. Reason:", data.reason);
-                        // logout(); 
+                    if (data.reason === 'session_mismatch') {
+                        console.warn("[Heartbeat] SESSION MISMATCH DETECTED. Logging out.");
+                        logout();
+                    } else if (data.reason === 'token_invalid' || data.reason === 'token_missing') {
+                        console.warn("[Heartbeat] Token issue:", data.reason);
+                        // Optional: Give it a grace period or verify user wasn't just navigating?
+                        logout();
                     }
                 }
             } catch (e) {
@@ -98,8 +102,13 @@ export default function InactivityTracker({ children }) {
 
         // Init
         resetIdleTimer();
-        checkSession();
-        const heartbeat = setInterval(checkSession, 60000); // Check every minute
+
+        // Initial check delayed by 5 minutes
+        let heartbeatInterval;
+        const startHeartbeat = setTimeout(() => {
+            checkSession(); // First check
+            heartbeatInterval = setInterval(checkSession, 60000); // Subsequent checks
+        }, 30 * 1000); // 30 seconds delay
 
         events.forEach(event => {
             window.addEventListener(event, resetIdleTimer);
@@ -108,7 +117,8 @@ export default function InactivityTracker({ children }) {
         return () => {
             if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
             if (logoutTimerRef.current) clearTimeout(logoutTimerRef.current);
-            clearInterval(heartbeat);
+            clearTimeout(startHeartbeat);
+            if (heartbeatInterval) clearInterval(heartbeatInterval);
             events.forEach(event => {
                 window.removeEventListener(event, resetIdleTimer);
             });

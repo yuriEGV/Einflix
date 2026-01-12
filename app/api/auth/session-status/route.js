@@ -1,12 +1,14 @@
 import dbConnect from '@/lib/mongodb';
 import User from '@/models/User';
 import { jwtVerify } from 'jose';
+import { cookies } from 'next/headers';
 
 const SECRET_KEY = process.env.JWT_SECRET || 'einflix_super_secret_key_2024';
 
 export async function GET(req) {
     try {
-        const token = req.cookies.get('session_token')?.value;
+        const cookieStore = cookies();
+        const token = cookieStore.get('session_token')?.value;
         if (!token) {
             return new Response(JSON.stringify({ active: false, reason: 'token_missing' }), {
                 status: 200,
@@ -62,14 +64,17 @@ export async function GET(req) {
         }
 
         if (user.activeSessionId !== payload.sessionId) {
-            console.warn(`[SessionStatus] Mismatch for ${user.email}.`);
-            console.warn(`DB Session:    ${user.activeSessionId}`);
-            console.warn(`Token Session: ${payload.sessionId}`);
-            // return new Response(JSON.stringify({ active: false, reason: 'session_mismatch' }), { ... }); 
-            // TEMPORARY: Allow mismatch to debug
-            return new Response(JSON.stringify({ active: true, warning: 'session_mismatch' }), {
+            console.warn(`[SessionStatus] MISMATCH detected!`);
+            console.warn(`   DB Active ID: ${user.activeSessionId}`);
+            console.warn(`   Token Sess ID: ${payload.sessionId}`);
+            console.warn(`   User Email:   ${user.email}`);
+            return new Response(JSON.stringify({ active: false, reason: 'session_mismatch' }), {
                 status: 200,
-                headers: { 'Content-Type': 'application/json' }
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+                    'Pragma': 'no-cache'
+                }
             });
         }
 

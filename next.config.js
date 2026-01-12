@@ -5,8 +5,8 @@ const nextConfig = {
         if (process.env.NODE_ENV === 'production') return [];
         return [
             {
-                source: '/api/:path*',
-                destination: 'http://localhost:3001/api/:path*',
+                source: '/api/((?!auth|drive|stream|poster|search).*)',
+                destination: 'http://localhost:3001/api/:1',
             },
         ]
     },

@@ -3,5 +3,8 @@ node_modules/
 .DS_Store
 .next/
 .next
-service-account.json
 
+# Google Service Account credentials
+service-account*.json
+*-sa.json
+secrets/

@@ -6,6 +6,7 @@ import Payment from '@/models/Payment';
 export const dynamic = 'force-dynamic';
 
 import mercadopago from 'mercadopago';
+import { NextResponse } from 'next/server';
 
 // Configurar SDK de Mercado Pago
 // Configurar SDK de Mercado Pago
@@ -68,13 +69,13 @@ export async function GET(req) {
                 status: status
             });
 
-            return Response.redirect(new URL('/payment/success', req.url));
+            return NextResponse.redirect(new URL('/payment/success', req.url));
         } else {
-            return Response.redirect(new URL('/payment?status=failed', req.url));
+            return NextResponse.redirect(new URL('/payment?status=failed', req.url));
         }
     } catch (error) {
         console.error('Error Callback:', error.message);
-        return Response.redirect(new URL('/payment?status=error', req.url));
+        return NextResponse.redirect(new URL('/payment?status=error', req.url));
     }
 }
 

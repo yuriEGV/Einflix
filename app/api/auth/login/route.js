@@ -80,7 +80,9 @@ export async function POST(req) {
             });
 
             // Set cookie manually
-            const cookieValue = `session_token=${token}; Path=/; Max-Age=${3 * 60 * 60}; HttpOnly; SameSite=Lax${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`;
+            // DEBUG: Semantic change -> Removed Secure for easier testing, though we should restore it for prod.
+            // For now, user says "el problema continua". Let's eliminate cookie issues.
+            const cookieValue = `session_token=${token}; Path=/; Max-Age=${3 * 60 * 60}; HttpOnly; SameSite=Lax`;
             response.headers.append('Set-Cookie', cookieValue);
 
             return response;

@@ -5,7 +5,7 @@ import connectDB from "../config/db.js";
 import routes from "../routes/index.js";
 import driveRoutes from "../routes/driveRoutes.js";
 
-dotenv.config();
+dotenv.config({ path: '../.env.local' });
 
 const app = express();
 app.use(cors());

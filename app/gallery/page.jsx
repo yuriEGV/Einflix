@@ -20,7 +20,7 @@ export default function GalleryPage() {
         async function load() {
             setLoading(true)
             try {
-                const res = await fetch('/api/drive/catalogo')
+                const res = await fetch('/api/drive/catalogo', { cache: 'no-store' })
                 const data = await res.json()
                 setItems(Array.isArray(data) ? data : [])
             } catch (e) {
@@ -46,8 +46,7 @@ export default function GalleryPage() {
         }
         try {
             await fetch('/api/auth/logout', { method: 'POST' });
-            router.push('/register');
-            router.refresh();
+            window.location.href = '/register';
         } catch (e) {
             console.error("Logout failed", e);
         }

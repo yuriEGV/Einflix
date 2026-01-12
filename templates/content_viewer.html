@@ -1,0 +1,74 @@
+﻿<!-- filepath: /c:/einflix/Einflix/templates/content_viewer.html -->
+<!-- ...existing code... -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Visor de Contenido - Einflix</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+<style>
+  body{font-family:Segoe UI,Arial,Helvetica,sans-serif;margin:10px}
+  #pdf-canvas{border:1px solid #ccc;width:100%;display:none}
+  #audio-player{width:100%;display:none;margin-top:10px}
+  #msg{color:#666;margin-top:8px}
+</style>
+</head>
+<body>
+  <div id="container">
+    <canvas id="pdf-canvas"></canvas>
+    <audio id="audio-player" controls></audio>
+    <div id="msg">Cargando contenido...</div>
+  </div>
+<script>
+  async function loadPoster(id){
+    const msg = document.getElementById('msg');
+    msg.textContent = 'Solicitando archivo...';
+    try {
+      const res = await fetch(/api/poster/);
+      if (!res.ok) {
+        const txt = await res.text();
+        msg.textContent = 'Error al obtener archivo: ' + txt;
+        return;
+      }
+      const contentType = (res.headers.get('content-type') || '').toLowerCase();
+      if (contentType.includes('application/pdf')) {
+        msg.textContent = '';
+        const arrayBuffer = await res.arrayBuffer();
+        const pdfjsLib = window['pdfjs-dist/build/pdf'];
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        const page = await pdf.getPage(1);
+        const viewport = page.getViewport({ scale: 1.2 });
+        const canvas = document.getElementById('pdf-canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        canvas.style.display = 'block';
+        await page.render({ canvasContext: ctx, viewport }).promise;
+      } else if (contentType.startsWith('audio/')) {
+        msg.textContent = '';
+        const blob = await res.blob();
+        const audio = document.getElementById('audio-player');
+        audio.src = URL.createObjectURL(blob);
+        audio.style.display = 'block';
+      } else {
+        msg.textContent = 'Tipo no soportado por el visor. Iniciando descarga...';
+        const blob = await res.blob();
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'archivo';
+        a.click();
+      }
+    } catch (err) {
+      msg.textContent = 'Error interno: ' + (err.message || err);
+    }
+  }
+  const params = new URLSearchParams(window.location.search);
+  const id = params.get('id');
+  if (id) loadPoster(id);
+  else document.getElementById('msg').textContent = 'No se proporcionó id del archivo.';
+</script>
+</body>
+</html>
+<!-- ...existing code... -->
