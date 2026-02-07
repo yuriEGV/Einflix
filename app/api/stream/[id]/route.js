@@ -6,6 +6,14 @@ import { isRateLimited } from '@/lib/rateLimit';
 export const dynamic = 'force-dynamic';
 
 export async function GET(req, { params }) {
+    return handleRequest(req, params);
+}
+
+export async function HEAD(req, { params }) {
+    return handleRequest(req, params, true);
+}
+
+async function handleRequest(req, params, isHead = false) {
     // Basic Rate Limit
     const ip = req.headers.get('x-forwarded-for') || 'local';
     if (isRateLimited(`stream-${ip}`, 100, 60000)) {
@@ -30,11 +38,11 @@ export async function GET(req, { params }) {
     const key = decryptId(encryptedId);
 
     try {
+        // Detect if it is S3 (usually has dots, slashes, or doesn't look like Drive ID)
         const isDriveId = key.match(/^[-\w]{25,}$/);
 
         if (!isDriveId) {
             // CASE: S3 Content
-            console.log(`[S3 Stream] Generating URL for: ${key}`);
             const url = await getS3PresignedUrl(key, 3600);
 
             if (!url) {
@@ -44,20 +52,31 @@ export async function GET(req, { params }) {
                 }), { status: 404, headers: { 'Content-Type': 'application/json' } });
             }
 
+            if (isHead) {
+                return new Response(null, { status: 200 });
+            }
+
             return new Response(null, {
                 status: 307,
-                headers: { 'Location': url, 'Cache-Control': 'no-store' }
+                headers: {
+                    'Location': url,
+                    'Cache-Control': 'no-store',
+                    'Access-Control-Allow-Origin': '*'
+                }
             });
         }
 
         // CASE: Legacy Google Drive Content
         const clients = await getAllDriveClients();
         if (clients.length === 0) {
-            return new Response('Drive service unavailable', { status: 503 });
+            // If no rotation keys, try to use the single one from lib/drive initialization
+            // but usually we want to return 503 if no service accounts are configured for rotation on Vercel
+            return new Response('Drive service unavailable (No service accounts)', { status: 503 });
         }
 
         let fileMeta = null;
         let successfulClient = null;
+        let lastError = null;
 
         for (const client of clients) {
             try {
@@ -66,13 +85,18 @@ export async function GET(req, { params }) {
                 successfulClient = client;
                 break;
             } catch (e) {
+                lastError = e;
                 console.warn(`⚠️ [Stream Meta] ${client.source} failed: ${e.message}`);
+                // If it's 404, no point in trying other clients usually, but Drive sometimes is weird
             }
         }
 
         if (!fileMeta) {
-            return new Response('File not found in any Drive account', { status: 404 });
+            const status = (lastError?.status === 403 || lastError?.message?.includes('403') || lastError?.message?.includes('rate limit')) ? 403 : 404;
+            return new Response(`Drive error: ${lastError?.message || 'Not found'}`, { status });
         }
+
+        if (isHead) return new Response(null, { status: 200, headers: { 'Content-Length': fileMeta.size } });
 
         // Fetch media with successful client
         const range = req.headers.get('range');

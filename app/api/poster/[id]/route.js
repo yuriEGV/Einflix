@@ -6,6 +6,14 @@ export const dynamic = 'force-dynamic';
 const FALLBACK_IMAGE_URL = 'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=600&q=80';
 
 export async function GET(req, { params }) {
+    return handleRequest(req, params);
+}
+
+export async function HEAD(req, { params }) {
+    return handleRequest(req, params, true);
+}
+
+async function handleRequest(req, params, isHead = false) {
     const { id: encryptedId } = params;
 
     if (!encryptedId) {
@@ -15,15 +23,12 @@ export async function GET(req, { params }) {
     const key = decryptId(encryptedId);
 
     try {
-        // Detect if it is a Google Drive ID (usually 33 chars alphanumeric/dashes)
         const isDriveId = key.match(/^[-\w]{25,}$/);
 
         let imageUrl = '';
         if (isDriveId) {
-            // Option 1: Direct link (requires public file)
             imageUrl = `https://drive.google.com/uc?export=view&id=${key}`;
         } else {
-            // Option 2: S3 Presigned URL
             imageUrl = await getS3PresignedUrl(key, 3600);
         }
 
@@ -31,7 +36,10 @@ export async function GET(req, { params }) {
             return new Response(null, { status: 302, headers: { Location: FALLBACK_IMAGE_URL } });
         }
 
-        // PROXY: Fetch and return directly to avoid CORS/429 in browser and hide S3 URL
+        if (isHead) {
+            return new Response(null, { status: 200 });
+        }
+
         const res = await fetch(imageUrl);
         if (!res.ok) {
             console.error(`[Poster Proxy] Failed to fetch: ${res.status} ${res.statusText} for ${key}`);
