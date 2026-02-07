@@ -1,134 +1,82 @@
-import { getDriveClient, getAllDriveClients, encryptId, decryptId } from '@/lib/drive';
+import { listBucketContents } from '@/lib/s3';
+import { decryptId, encryptId } from '@/lib/drive';
 
 export const dynamic = 'force-dynamic';
 
-// Simple in-memory cache for folder listings
-const folderCache = new Map();
-const CACHE_TTL = 120000; // 2 minutes
-
 export async function GET(req) {
     const { searchParams } = new URL(req.url);
-    const encryptedFolderId = searchParams.get('id');
-    const folderId = decryptId(encryptedFolderId);
+    const id = searchParams.get('id') || '';
 
-    console.log(`[Drive List] Req: ${encryptedFolderId?.slice(0, 10)}... -> Decrypted: ${folderId}`);
-
-    if (!folderId) {
-        console.error("❌ Drive List Error: Missing or invalid folder ID");
-        return new Response(JSON.stringify({ error: 'Missing folder ID' }), { status: 400 });
-    }
-
-    // Check Cache
-    const cached = folderCache.get(folderId);
-    if (cached && (Date.now() - cached.timestamp < CACHE_TTL)) {
-        console.log(`[Drive List] Serving cached data for: ${folderId}`);
-        return new Response(JSON.stringify(cached.data), {
-            headers: { 'Content-Type': 'application/json', 'X-Cache': 'HIT' }
-        });
-    }
+    // Decrypt if necessary
+    const decodedId = decryptId(id);
 
     try {
-        const clients = await getAllDriveClients();
+        let files = [];
 
-        if (clients.length === 0) {
-            console.error("❌ Drive client not initialized - check GOOGLE_APPLICATION_CREDENTIALS");
-            return new Response(JSON.stringify({
-                error: 'service_unavailable',
-                message: 'Drive service is not available. Please try again later.'
-            }), {
-                status: 503,
-                headers: { 'Content-Type': 'application/json' }
+        // Detect if it is a Google Drive ID
+        const isDriveId = decodedId && decodedId.match(/^[-\w]{25,}$/);
+
+        if (isDriveId) {
+            console.log(`[Hybrid List] Routing to Drive for: "${decodedId}"`);
+            const { getDriveClient } = await import('@/lib/drive');
+            const drive = await getDriveClient();
+            if (!drive) throw new Error("Could not initialize Drive client");
+
+            const driveRes = await drive.files.list({
+                q: `'${decodedId}' in parents and trashed = false`,
+                fields: 'files(id, name, mimeType, thumbnailLink, size, webViewLink)',
+                pageSize: 1000,
+                orderBy: 'name',
+                supportsAllDrives: true,
+                includeItemsFromAllDrives: true
             });
-        }
 
-        let lastError = null;
-        let files = null;
-
-        // Try sequentially across all available accounts
-        for (const client of clients) {
-            try {
-                console.log(`[Drive List] Attempting fetch with ${client.source} for folder ${folderId}`);
-
-                // 1. Accessibility check
-                await client.instance.files.get({
-                    fileId: folderId,
-                    fields: 'id, name',
-                    supportsAllDrives: true
-                });
-
-                // 2. Listing
-                const response = await client.instance.files.list({
-                    q: `'${folderId}' in parents and trashed = false`,
-                    fields: 'files(id, name, mimeType, thumbnailLink)',
-                    orderBy: 'name',
-                    pageSize: 100,
-                    supportsAllDrives: true,
-                    includeItemsFromAllDrives: true
-                });
-
-                files = response.data.files.map(file => {
-                    const isFolder = file.mimeType === 'application/vnd.google-apps.folder';
-                    const isPdf = file.mimeType === 'application/pdf';
-                    const isAudio = file.mimeType.startsWith('audio/');
-                    const isComic = file.name.toLowerCase().endsWith('.cbr') || file.name.toLowerCase().endsWith('.cbz');
-                    const isVideo = file.mimeType.startsWith('video/') || file.name.toLowerCase().endsWith('.avi');
-
-                    let type = 'video';
-                    if (isFolder) type = 'folder';
-                    else if (isPdf) type = 'pdf';
-                    else if (isAudio) type = 'audio';
-                    else if (isComic) type = 'pdf';
-                    else if (isVideo) type = 'video';
-
-                    const safeId = encryptId(file.id);
-
-                    return {
-                        id: safeId,
-                        title: file.name,
-                        type: type,
-                        mimeType: file.mimeType,
-                        thumbnail: `/api/poster/${safeId}`,
-                        original: isFolder ? null : `/api/stream/${safeId}`,
-                        preview: isFolder
-                            ? `/api/drive/list?id=${safeId}`
-                            : `/api/stream/${safeId}`
-                    };
-                });
-
-                // Success!
-                break;
-            } catch (e) {
-                lastError = e;
-                console.warn(`⚠️ [Drive List] ${client.source} failed: ${e.message}`);
-                // Continue to next client if 404/403 (permissions or not found for THIS account)
-                if (e.code !== 404 && e.code !== 403) {
-                    // If it's something else but not quota, we might want to log it specifically
-                }
-            }
-        }
-
-        if (!files) {
-            console.error(`❌ [Drive List] Exhausted all accounts for folder: ${folderId}`);
-            return new Response(JSON.stringify({
-                error: 'not_found',
-                message: 'No se pudo acceder a la carpeta. Verifique que esté compartida con las cuentas del sistema.',
-                debug: lastError?.message
-            }), {
-                status: 404,
-                headers: { 'Content-Type': 'application/json' }
+            files = (driveRes.data.files || []).map(file => {
+                const isFolder = file.mimeType === 'application/vnd.google-apps.folder';
+                return {
+                    id: file.id,
+                    title: file.name,
+                    type: isFolder ? 'folder' : (file.mimeType.startsWith('video/') ? 'video' : 'file'),
+                    mimeType: file.mimeType,
+                    size: file.size,
+                    thumbnail: file.thumbnailLink,
+                    original: file.webViewLink,
+                    preview: `https://drive.google.com/file/d/${file.id}/preview`
+                };
             });
+        } else {
+            // CASE: S3 Prefix
+            console.log(`[Hybrid List] Routing to S3 for: "${decodedId}"`);
+            files = await listBucketContents(decodedId);
         }
 
-        // Save to cache
-        folderCache.set(folderId, { data: files, timestamp: Date.now() });
+        // Encrypt all IDs in the response for consistency
+        const encryptedFiles = files.map(file => {
+            const safeId = encryptId(file.id);
+            const isS3Content = !file.id.match(/^[-\w]{25,}$/);
 
-        return new Response(JSON.stringify(files), {
-            headers: { 'Content-Type': 'application/json', 'X-Cache': 'MISS' }
+            return {
+                ...file,
+                id: safeId,
+                isS3: isS3Content,
+                thumbnail: `/api/poster/${safeId}`,
+                original: isS3Content ? `/api/stream/${safeId}` : file.original,
+                preview: file.type === 'folder'
+                    ? `/api/drive/list?id=${safeId}`
+                    : (isS3Content ? `/api/stream/${safeId}` : file.preview)
+            };
+        });
+
+        return new Response(JSON.stringify(encryptedFiles), {
+            headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }
         });
 
     } catch (error) {
-        console.error('Drive List Critical Error:', error);
-        return new Response(JSON.stringify({ error: 'Internal Server Error: ' + error.message }), {
+        console.error('Hybrid List Error:', error);
+        return new Response(JSON.stringify({
+            error: 'server_error',
+            message: 'Error al listar contenido.'
+        }), {
             status: 500,
             headers: { 'Content-Type': 'application/json' }
         });

@@ -1,4 +1,5 @@
-import { getAllDriveClients, decryptId } from '@/lib/drive';
+import { getS3PresignedUrl } from '@/lib/s3';
+import { decryptId } from '@/lib/drive';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,67 +12,45 @@ export async function GET(req, { params }) {
         return new Response('Missing ID', { status: 400 });
     }
 
-    const id = decryptId(encryptedId);
+    const key = decryptId(encryptedId);
 
     try {
-        const clients = await getAllDriveClients();
-        if (clients.length === 0) {
-            console.error("❌ Drive client not initialized - check GOOGLE_APPLICATION_CREDENTIALS");
+        // Detect if it is a Google Drive ID (usually 33 chars alphanumeric/dashes)
+        const isDriveId = key.match(/^[-\w]{25,}$/);
+
+        let imageUrl = '';
+        if (isDriveId) {
+            // Option 1: Direct link (requires public file)
+            imageUrl = `https://drive.google.com/uc?export=view&id=${key}`;
+        } else {
+            // Option 2: S3 Presigned URL
+            imageUrl = await getS3PresignedUrl(key, 3600);
+        }
+
+        if (!imageUrl) {
             return new Response(null, { status: 302, headers: { Location: FALLBACK_IMAGE_URL } });
         }
 
-        let mediaResponse = null;
-        let successfulClient = null;
+        // PROXY: Fetch and return directly to avoid CORS/429 in browser and hide S3 URL
+        const res = await fetch(imageUrl);
+        if (!res.ok) {
+            console.error(`[Poster Proxy] Failed to fetch: ${res.status} ${res.statusText} for ${key}`);
+            return new Response(null, { status: 302, headers: { Location: FALLBACK_IMAGE_URL } });
+        }
 
-        // Try sequentially across all available accounts
-        for (const client of clients) {
-            try {
-                // Fetch image as stream
-                mediaResponse = await client.instance.files.get(
-                    { fileId: id, alt: 'media', acknowledgeAbuse: true },
-                    { responseType: 'stream' }
-                );
-                successfulClient = client;
-                break;
-            } catch (e) {
-                // Log only if not found/not downloadable
-                const isSilentError = e.code === 404 || e.message?.includes('fileNotDownloadable');
-                if (!isSilentError) {
-                    console.warn(`⚠️ [Poster] ${client.source} failed for ${id}: ${e.message}`);
-                }
+        const blob = await res.blob();
+
+        return new Response(blob, {
+            status: 200,
+            headers: {
+                'Content-Type': res.headers.get('Content-Type') || 'image/jpeg',
+                'Cache-Control': 'public, max-age=3600',
+                'Access-Control-Allow-Origin': '*'
             }
-        }
-
-        if (!mediaResponse) {
-            return new Response(null, { status: 302, headers: { Location: FALLBACK_IMAGE_URL } });
-        }
-
-        const headers = new Headers();
-        headers.set('Content-Type', mediaResponse.headers['content-type'] || 'image/jpeg');
-        headers.set('Cache-Control', 'public, max-age=604800, immutable'); // Cache 7 days
-        headers.set('Access-Control-Allow-Origin', '*');
-        headers.set('X-Drive-Source', successfulClient.source);
-
-        const nodeStream = mediaResponse.data;
-        let isCancelled = false;
-
-        const webStream = new ReadableStream({
-            start(controller) {
-                nodeStream.on('data', (chunk) => {
-                    if (!isCancelled) {
-                        try { controller.enqueue(chunk); }
-                        catch (e) { isCancelled = true; nodeStream.destroy(); }
-                    }
-                });
-                nodeStream.on('end', () => { if (!isCancelled) { try { controller.close(); } catch (e) { } } });
-                nodeStream.on('error', (err) => { if (!isCancelled) { try { controller.error(err); } catch (e) { } } });
-            },
-            cancel() { isCancelled = true; nodeStream.destroy(); }
         });
 
-        return new Response(webStream, { headers });
-
     } catch (error) {
+        console.error("[Poster Proxy] Error:", error);
         return new Response(null, { status: 302, headers: { Location: FALLBACK_IMAGE_URL } });
     }
 }
