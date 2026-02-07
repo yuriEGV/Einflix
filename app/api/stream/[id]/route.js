@@ -36,9 +36,12 @@ async function handleRequest(req, params, isHead = false) {
     if (!encryptedId) return new Response('Missing ID', { status: 400 });
 
     const key = decryptId(encryptedId);
+    if (!key || key === encryptedId && encryptedId.startsWith('ef-')) {
+        console.error(`[Stream] Decryption failed or returned invalid key for: ${encryptedId}`);
+        return new Response('Invalid or unreadable ID', { status: 400 });
+    }
 
     try {
-        // Detect if it is S3 (usually has dots, slashes, or doesn't look like Drive ID)
         const isDriveId = key.match(/^[-\w]{25,}$/);
 
         if (!isDriveId) {
@@ -46,16 +49,16 @@ async function handleRequest(req, params, isHead = false) {
             const url = await getS3PresignedUrl(key, 3600);
 
             if (!url) {
+                console.error(`[S3 Stream] File not found in S3: ${key}`);
                 return new Response(JSON.stringify({
                     error: 'not_found',
                     message: 'No se pudo encontrar el archivo en S3.'
                 }), { status: 404, headers: { 'Content-Type': 'application/json' } });
             }
 
-            if (isHead) {
-                return new Response(null, { status: 200 });
-            }
+            if (isHead) return new Response(null, { status: 200 });
 
+            console.log(`[S3 Stream] Redirecting to S3 for: ${key}`);
             return new Response(null, {
                 status: 307,
                 headers: {
@@ -68,32 +71,42 @@ async function handleRequest(req, params, isHead = false) {
 
         // CASE: Legacy Google Drive Content
         const clients = await getAllDriveClients();
+        console.log(`[Drive Stream] Starting rotation for ${key}. Available clients: ${clients.length}`);
+
         if (clients.length === 0) {
-            // If no rotation keys, try to use the single one from lib/drive initialization
-            // but usually we want to return 503 if no service accounts are configured for rotation on Vercel
+            console.error("[Drive Stream] CRITICAL: No Drive clients configured in environment.");
             return new Response('Drive service unavailable (No service accounts)', { status: 503 });
         }
 
         let fileMeta = null;
         let successfulClient = null;
         let lastError = null;
+        let attempts = 0;
 
         for (const client of clients) {
+            attempts++;
             try {
                 const metaRes = await client.instance.files.get({ fileId: key, fields: 'size, mimeType, name' });
                 fileMeta = metaRes.data;
                 successfulClient = client;
+                console.log(`[Drive Stream] ✅ Success with ${client.source} on attempt ${attempts}`);
                 break;
             } catch (e) {
                 lastError = e;
-                console.warn(`⚠️ [Stream Meta] ${client.source} failed: ${e.message}`);
-                // If it's 404, no point in trying other clients usually, but Drive sometimes is weird
+                const isQuota = e.status === 403 || e.message?.includes('403') || e.message?.includes('rate limit');
+                console.warn(`[Drive Stream] ❌ Client ${client.source} failed (Attempt ${attempts}): ${isQuota ? 'QUOTA_EXCEEDED' : e.message}`);
+
+                // If it's a 404 (Not Found), it might be that THIS service account doesn't have permission.
+                // We keep trying other accounts.
             }
         }
 
         if (!fileMeta) {
-            const status = (lastError?.status === 403 || lastError?.message?.includes('403') || lastError?.message?.includes('rate limit')) ? 403 : 404;
-            return new Response(`Drive error: ${lastError?.message || 'Not found'}`, { status });
+            const isQuotaTotal = (lastError?.status === 403 || lastError?.message?.includes('403') || lastError?.message?.includes('rate limit'));
+            console.error(`[Drive Stream] 💀 All ${clients.length} clients failed for ${key}. Last error: ${lastError?.message}`);
+            return new Response(`Drive error: ${lastError?.message || 'Not found'}`, {
+                status: isQuotaTotal ? 403 : 404
+            });
         }
 
         if (isHead) return new Response(null, { status: 200, headers: { 'Content-Length': fileMeta.size } });

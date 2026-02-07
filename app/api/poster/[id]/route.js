@@ -1,5 +1,5 @@
+import { decryptId, getAllDriveClients } from '@/lib/drive';
 import { getS3PresignedUrl } from '@/lib/s3';
-import { decryptId } from '@/lib/drive';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,34 +25,64 @@ async function handleRequest(req, params, isHead = false) {
     try {
         const isDriveId = key.match(/^[-\w]{25,}$/);
 
-        let imageUrl = '';
-        if (isDriveId) {
-            imageUrl = `https://drive.google.com/uc?export=view&id=${key}`;
-        } else {
-            imageUrl = await getS3PresignedUrl(key, 3600);
+        if (!isDriveId) {
+            // S3 Logic
+            const imageUrl = await getS3PresignedUrl(key, 3600);
+            if (!imageUrl) return new Response(null, { status: 302, headers: { Location: FALLBACK_IMAGE_URL } });
+            if (isHead) return new Response(null, { status: 200 });
+
+            const res = await fetch(imageUrl);
+            if (!res.ok) return new Response(null, { status: 302, headers: { Location: FALLBACK_IMAGE_URL } });
+
+            const blob = await res.blob();
+            return new Response(blob, {
+                status: 200,
+                headers: {
+                    'Content-Type': res.headers.get('Content-Type') || 'image/jpeg',
+                    'Cache-Control': 'public, max-age=3600',
+                    'Access-Control-Allow-Origin': '*'
+                }
+            });
         }
 
-        if (!imageUrl) {
+        // Drive Logic with Rotation
+        const clients = await getAllDriveClients();
+        if (clients.length === 0) {
+            console.error("[Poster] No Drive clients available");
             return new Response(null, { status: 302, headers: { Location: FALLBACK_IMAGE_URL } });
         }
 
-        if (isHead) {
-            return new Response(null, { status: 200 });
+        let imageBlob = null;
+        let contentType = 'image/jpeg';
+
+        for (const client of clients) {
+            try {
+                // We use files.get with alt: 'media' to download the image
+                const res = await client.instance.files.get(
+                    { fileId: key, alt: 'media', acknowledgeAbuse: true },
+                    { responseType: 'arraybuffer' }
+                );
+
+                imageBlob = res.data;
+                contentType = res.headers['content-type'] || 'image/jpeg';
+                break;
+            } catch (e) {
+                console.warn(`[Poster] Client ${client.source} failed for ${key}: ${e.message}`);
+                // Continue to next client
+            }
         }
 
-        const res = await fetch(imageUrl);
-        if (!res.ok) {
-            console.error(`[Poster Proxy] Failed to fetch: ${res.status} ${res.statusText} for ${key}`);
+        if (!imageBlob) {
             return new Response(null, { status: 302, headers: { Location: FALLBACK_IMAGE_URL } });
         }
 
-        const blob = await res.blob();
+        if (isHead) return new Response(null, { status: 200 });
 
-        return new Response(blob, {
+        return new Response(imageBlob, {
             status: 200,
             headers: {
-                'Content-Type': res.headers.get('Content-Type') || 'image/jpeg',
-                'Cache-Control': 'public, max-age=3600',
+                'Content-Type': contentType,
+                'Cache-Control': 'public, max-age=86400', // Cache posters longer
                 'Access-Control-Allow-Origin': '*'
             }
         });
