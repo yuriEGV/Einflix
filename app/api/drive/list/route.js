@@ -33,10 +33,24 @@ export async function GET(req) {
 
             files = (driveRes.data.files || []).map(file => {
                 const isFolder = file.mimeType === 'application/vnd.google-apps.folder';
+                let type = 'file';
+
+                if (isFolder) {
+                    type = 'folder';
+                } else if (file.mimeType.startsWith('video/')) {
+                    type = 'video';
+                } else if (file.mimeType === 'application/pdf') {
+                    type = 'pdf';
+                } else if (file.mimeType.startsWith('audio/')) {
+                    type = 'audio';
+                } else if (file.name.toLowerCase().endsWith('.cbr') || file.name.toLowerCase().endsWith('.cbz')) {
+                    type = 'comic';
+                }
+
                 return {
                     id: file.id,
                     title: file.name,
-                    type: isFolder ? 'folder' : (file.mimeType.startsWith('video/') ? 'video' : 'file'),
+                    type: type,
                     mimeType: file.mimeType,
                     size: file.size,
                     thumbnail: file.thumbnailLink,

@@ -185,12 +185,20 @@ export async function GET(req) {
             const id = item.id;
             if (!id) return null;
 
-            const isS3 = !id.match(/^[-\w]{25,}$/) && !id.startsWith('local-') && !id.startsWith('ef-');
+            const isDriveId = !id.startsWith('ef-') && id.match(/^[-\w]{25,}$/);
             const safeId = id.startsWith('ef-') ? id : encryptId(id);
 
-            const contentType = item.contentType || 'video';
-            const isFolder = contentType === 'drive' || contentType === 'folder' ||
+            let itemType = item.contentType || 'video';
+            if (item.title && (item.title.toLowerCase().endsWith('.pdf') || item.category === 'Libro' || item.category === 'Comic')) {
+                itemType = 'pdf';
+            } else if (item.category === 'Música' || item.category === 'Karaoke') {
+                itemType = 'audio';
+            }
+
+            const isFolder = itemType === 'drive' || itemType === 'folder' ||
                 (item.folderUrl ? (item.folderUrl.includes('/folders/') || item.folderUrl.includes('embeddedfolderview')) : false);
+
+            const type = isFolder ? 'folder' : itemType;
 
             const tags = item.tags || [];
             let category = tags[0] || (isFolder ? 'Carpeta' : 'Multimedia');
@@ -200,7 +208,7 @@ export async function GET(req) {
             let originalUrl = `/api/stream/${safeId}`;
 
             if (isFolder) {
-                if (isS3 || id.startsWith('local-')) {
+                if (!isDriveId || id.startsWith('local-')) {
                     previewUrl = `/api/drive/list?id=${safeId}`;
                     originalUrl = `/api/drive/list?id=${safeId}`;
                 } else {
@@ -214,7 +222,7 @@ export async function GET(req) {
                 title: item.title,
                 category,
                 description: item.description,
-                type: isFolder ? 'folder' : contentType,
+                type: type,
                 thumbnail: `/api/poster/${safeId}`,
                 original: originalUrl,
                 preview: previewUrl,
