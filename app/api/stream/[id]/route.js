@@ -33,35 +33,45 @@ async function handleRequest(req, params, isHead = false) {
     }
 
     const { id: encryptedId } = params;
-    if (!encryptedId) return new Response('Missing ID', { status: 400 });
+
+    if (!encryptedId) {
+        return new Response('Missing ID', { status: 400 });
+    }
 
     const key = decryptId(encryptedId);
-    if (!key || key === encryptedId && encryptedId.startsWith('ef-')) {
-        console.error(`[Stream] Decryption failed or returned invalid key for: ${encryptedId}`);
-        return new Response('Invalid or unreadable ID', { status: 400 });
+    const diagHeaders = {
+        'X-Einflix-Enc-ID': encryptedId.slice(0, 10),
+        'X-Einflix-Dec-ID': key ? (key.slice(0, 3) + '...' + key.slice(-3)) : 'FAIL'
+    };
+
+    if (!key) {
+        return new Response('Invalid ID or Decryption Failed', {
+            status: 400,
+            headers: { ...diagHeaders }
+        });
     }
 
     try {
         const isDriveId = key.match(/^[-\w]{25,}$/);
+        diagHeaders['X-Einflix-Type'] = isDriveId ? 'Drive' : 'S3';
 
         if (!isDriveId) {
             // CASE: S3 Content
             const url = await getS3PresignedUrl(key, 3600);
 
             if (!url) {
-                console.error(`[S3 Stream] File not found in S3: ${key}`);
                 return new Response(JSON.stringify({
                     error: 'not_found',
                     message: 'No se pudo encontrar el archivo en S3.'
-                }), { status: 404, headers: { 'Content-Type': 'application/json' } });
+                }), { status: 404, headers: { ...diagHeaders, 'Content-Type': 'application/json' } });
             }
 
-            if (isHead) return new Response(null, { status: 200 });
+            if (isHead) return new Response(null, { status: 200, headers: diagHeaders });
 
-            console.log(`[S3 Stream] Redirecting to S3 for: ${key}`);
             return new Response(null, {
                 status: 307,
                 headers: {
+                    ...diagHeaders,
                     'Location': url,
                     'Cache-Control': 'no-store',
                     'Access-Control-Allow-Origin': '*'
@@ -71,11 +81,13 @@ async function handleRequest(req, params, isHead = false) {
 
         // CASE: Legacy Google Drive Content
         const clients = await getAllDriveClients();
-        console.log(`[Drive Stream] Starting rotation for ${key}. Available clients: ${clients.length}`);
+        diagHeaders['X-Einflix-Accounts'] = clients.length.toString();
 
         if (clients.length === 0) {
-            console.error("[Drive Stream] CRITICAL: No Drive clients configured in environment.");
-            return new Response('Drive service unavailable (No service accounts)', { status: 503 });
+            return new Response('Drive service unavailable (No service accounts)', {
+                status: 503,
+                headers: diagHeaders
+            });
         }
 
         let fileMeta = null;
@@ -89,27 +101,22 @@ async function handleRequest(req, params, isHead = false) {
                 const metaRes = await client.instance.files.get({ fileId: key, fields: 'size, mimeType, name' });
                 fileMeta = metaRes.data;
                 successfulClient = client;
-                console.log(`[Drive Stream] ✅ Success with ${client.source} on attempt ${attempts}`);
+                diagHeaders['X-Einflix-Success-Slot'] = client.source;
                 break;
             } catch (e) {
                 lastError = e;
-                const isQuota = e.status === 403 || e.message?.includes('403') || e.message?.includes('rate limit');
-                console.warn(`[Drive Stream] ❌ Client ${client.source} failed (Attempt ${attempts}): ${isQuota ? 'QUOTA_EXCEEDED' : e.message}`);
-
-                // If it's a 404 (Not Found), it might be that THIS service account doesn't have permission.
-                // We keep trying other accounts.
             }
         }
 
         if (!fileMeta) {
             const isQuotaTotal = (lastError?.status === 403 || lastError?.message?.includes('403') || lastError?.message?.includes('rate limit'));
-            console.error(`[Drive Stream] 💀 All ${clients.length} clients failed for ${key}. Last error: ${lastError?.message}`);
             return new Response(`Drive error: ${lastError?.message || 'Not found'}`, {
-                status: isQuotaTotal ? 403 : 404
+                status: isQuotaTotal ? 403 : 404,
+                headers: { ...diagHeaders, 'X-Einflix-Last-Error': lastError?.message?.slice(0, 50) }
             });
         }
 
-        if (isHead) return new Response(null, { status: 200, headers: { 'Content-Length': fileMeta.size } });
+        if (isHead) return new Response(null, { status: 200, headers: { ...diagHeaders, 'Content-Length': fileMeta.size } });
 
         // Fetch media with successful client
         const range = req.headers.get('range');
@@ -130,6 +137,7 @@ async function handleRequest(req, params, isHead = false) {
         });
 
         const headers = {
+            ...diagHeaders,
             'Content-Type': fileMeta.mimeType || 'video/mp4',
             'Accept-Ranges': 'bytes',
             'Content-Length': fileMeta.size,
@@ -144,9 +152,6 @@ async function handleRequest(req, params, isHead = false) {
         return new Response(webStream, { status: 200, headers });
 
     } catch (error) {
-        console.error("Streaming Error:", error);
-        return new Response('Error streaming file', { status: 500 });
+        return new Response('Error streaming file', { status: 500, headers: diagHeaders });
     }
 }
-
-
