@@ -20,30 +20,35 @@ async function handleRequest(req, params, isHead = false) {
         return new Response('Missing ID', { status: 400 });
     }
 
+    // 1. Decrypt if necessary
     const key = decryptId(encryptedId);
+
+    // Check if it's an encrypted Drive ID or a raw Drive ID
+    const isDriveEncrypted = encryptedId.startsWith('ef-');
+    const isDriveRaw = key && key.match(/^[-\w]{25,}$/);
+    const isDriveId = isDriveEncrypted || isDriveRaw;
+
     const diagHeaders = {
-        'X-Einflix-Enc-ID': encryptedId.slice(0, 10),
-        'X-Einflix-Dec-ID': key ? (key.slice(0, 3) + '...' + key.slice(-3)) : 'FAIL'
+        'X-Einflix-Enc-ID': encryptedId.slice(0, 15),
+        'X-Einflix-Dec-Status': key ? 'OK' : 'FAIL',
+        'X-Einflix-Type': isDriveId ? 'Drive' : 'S3'
     };
 
-    if (!key) {
-        return new Response('Invalid ID or Decryption Failed', {
-            status: 400,
-            headers: { ...diagHeaders }
+    if (isDriveEncrypted && !key) {
+        return new Response('Decryption Failed - Encryption Key Mismatch?', {
+            status: 403, // Use 403 to indicate something is blocked/wrong with credentials
+            headers: { ...diagHeaders, 'X-Einflix-Error': 'DecryptionFailed' }
         });
     }
 
     try {
-        const isDriveId = key.match(/^[-\w]{25,}$/);
-        diagHeaders['X-Einflix-Type'] = isDriveId ? 'Drive' : 'S3';
-
         if (!isDriveId) {
             // S3 Logic
-            const imageUrl = await getS3PresignedUrl(key, 3600);
+            const imageUrl = await getS3PresignedUrl(key || encryptedId, 3600);
             if (!imageUrl) {
                 return new Response(null, {
                     status: 302,
-                    headers: { ...diagHeaders, Location: FALLBACK_IMAGE_URL }
+                    headers: { ...diagHeaders, Location: FALLBACK_IMAGE_URL, 'X-Einflix-Error': 'S3NotFound' }
                 });
             }
 

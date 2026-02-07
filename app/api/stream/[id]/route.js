@@ -39,31 +39,35 @@ async function handleRequest(req, params, isHead = false) {
     }
 
     const key = decryptId(encryptedId);
+
+    // Check if it's an encrypted Drive ID or a raw Drive ID
+    const isDriveEncrypted = encryptedId.startsWith('ef-');
+    const isDriveRaw = key && key.match(/^[-\w]{25,}$/);
+    const isDriveId = isDriveEncrypted || isDriveRaw;
+
     const diagHeaders = {
-        'X-Einflix-Enc-ID': encryptedId.slice(0, 10),
-        'X-Einflix-Dec-ID': key ? (key.slice(0, 3) + '...' + key.slice(-3)) : 'FAIL'
+        'X-Einflix-Enc-ID': encryptedId.slice(0, 15),
+        'X-Einflix-Dec-Status': key ? 'OK' : 'FAIL',
+        'X-Einflix-Type': isDriveId ? 'Drive' : 'S3'
     };
 
-    if (!key) {
-        return new Response('Invalid ID or Decryption Failed', {
-            status: 400,
-            headers: { ...diagHeaders }
+    if (isDriveEncrypted && !key) {
+        return new Response('Decryption Failed - Check ENCRYPTION_KEY on Vercel', {
+            status: 403,
+            headers: { ...diagHeaders, 'X-Einflix-Error': 'DecryptionFailed' }
         });
     }
 
     try {
-        const isDriveId = key.match(/^[-\w]{25,}$/);
-        diagHeaders['X-Einflix-Type'] = isDriveId ? 'Drive' : 'S3';
-
         if (!isDriveId) {
             // CASE: S3 Content
-            const url = await getS3PresignedUrl(key, 3600);
+            const url = await getS3PresignedUrl(key || encryptedId, 3600);
 
             if (!url) {
                 return new Response(JSON.stringify({
                     error: 'not_found',
                     message: 'No se pudo encontrar el archivo en S3.'
-                }), { status: 404, headers: { ...diagHeaders, 'Content-Type': 'application/json' } });
+                }), { status: 404, headers: { ...diagHeaders, 'X-Einflix-Error': 'S3NotFound', 'Content-Type': 'application/json' } });
             }
 
             if (isHead) return new Response(null, { status: 200, headers: diagHeaders });
