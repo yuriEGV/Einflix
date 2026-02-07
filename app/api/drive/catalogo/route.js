@@ -185,7 +185,7 @@ export async function GET(req) {
             const id = item.id;
             if (!id) return null;
 
-            const isDriveId = !id.startsWith('ef-') && id.match(/^[-\w]{25,}$/);
+            const isDriveId = (id.match(/^[-\w]{25,}$/) || id.startsWith('ef-')) && !id.startsWith('local-');
             const safeId = id.startsWith('ef-') ? id : encryptId(id);
 
             let itemType = item.contentType || 'video';
@@ -208,13 +208,10 @@ export async function GET(req) {
             let originalUrl = `/api/stream/${safeId}`;
 
             if (isFolder) {
-                if (!isDriveId || id.startsWith('local-')) {
-                    previewUrl = `/api/drive/list?id=${safeId}`;
-                    originalUrl = `/api/drive/list?id=${safeId}`;
-                } else {
-                    previewUrl = `https://drive.google.com/embeddedfolderview?id=${id}#grid`;
-                    originalUrl = `https://drive.google.com/embeddedfolderview?id=${id}#grid`;
-                }
+                // If it's a Drive ID (raw or encrypted), we want BOTH routes to support it.
+                // But specifically for folders, list/route handles them well.
+                previewUrl = `/api/drive/list?id=${safeId}`;
+                originalUrl = `/api/drive/list?id=${safeId}`;
             }
 
             return {

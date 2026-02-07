@@ -1,5 +1,5 @@
 import { listBucketContents } from '@/lib/s3';
-import { decryptId, encryptId } from '@/lib/drive';
+import { decryptId, encryptId, getDriveClient } from '@/lib/drive';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,11 +14,10 @@ export async function GET(req) {
         let files = [];
 
         // Detect if it is a Google Drive ID
-        const isDriveId = decodedId && decodedId.match(/^[-\w]{25,}$/);
+        const isDriveId = decodedId && typeof decodedId === 'string' && decodedId.match(/^[-\w]{25,}$/);
 
         if (isDriveId) {
             console.log(`[Hybrid List] Routing to Drive for: "${decodedId}"`);
-            const { getDriveClient } = await import('@/lib/drive');
             const drive = await getDriveClient();
             if (!drive) throw new Error("Could not initialize Drive client");
 
@@ -61,28 +60,35 @@ export async function GET(req) {
         } else {
             // CASE: S3 Prefix
             console.log(`[Hybrid List] Routing to S3 for: "${decodedId}"`);
-            files = await listBucketContents(decodedId);
+            files = await listBucketContents(decodedId || '');
         }
 
         // Encrypt all IDs in the response for consistency
         const encryptedFiles = files.map(file => {
-            const safeId = encryptId(file.id);
-            const isS3Content = !file.id.match(/^[-\w]{25,}$/);
+            if (!file || !file.id) return null;
+
+            // Important: If it's already encrypted, don't do it again
+            const safeId = file.id.startsWith('ef-') ? file.id : encryptId(file.id);
+            const isS3Content = !file.id.match(/^[-\w]{25,}$/) && !file.id.startsWith('ef-');
 
             return {
                 ...file,
                 id: safeId,
                 isS3: isS3Content,
-                thumbnail: `/api/poster/${safeId}`,
+                thumbnail: file.thumbnail || `/api/poster/${safeId}`,
                 original: isS3Content ? `/api/stream/${safeId}` : file.original,
                 preview: file.type === 'folder'
                     ? `/api/drive/list?id=${safeId}`
                     : (isS3Content ? `/api/stream/${safeId}` : file.preview)
             };
-        });
+        }).filter(Boolean);
 
         return new Response(JSON.stringify(encryptedFiles), {
-            headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }
+            headers: {
+                'Content-Type': 'application/json',
+                'Cache-Control': 'no-store',
+                'X-Einflix-Trace': `List-${isDriveId ? 'Drive' : 'S3'}-${decodedId ? 'DecOk' : 'DecFail'}`
+            }
         });
 
     } catch (error) {
