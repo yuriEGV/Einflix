@@ -185,7 +185,8 @@ export async function GET(req) {
             const id = item.id;
             if (!id) return null;
 
-            const isDriveId = (id.match(/^[-\w]{25,}$/) || id.startsWith('ef-')) && !id.startsWith('local-');
+            const isDriveId = !!((id.match(/^[-\w]{25,}$/) || id.startsWith('ef-')) && !id.startsWith('local-'));
+            const isS3 = !isDriveId && !id.startsWith('local-');
             const safeId = id.startsWith('ef-') ? id : encryptId(id);
 
             let itemType = item.contentType || 'video';
