@@ -16,12 +16,17 @@ export async function GET() {
         // Check if using default key
         const isDefaultKey = !process.env.ID_ENCRYPTION_KEY || process.env.ID_ENCRYPTION_KEY === 'einflix_super_secret_id_key_2024';
 
+        // Key Fingerprint (first 4 and last 4 chars)
+        const keyRaw = process.env.ID_ENCRYPTION_KEY || 'einflix_super_secret_id_key_2024';
+        const keyFingerprint = `${keyRaw.slice(0, 4)}...${keyRaw.slice(-4)}`;
+
         return NextResponse.json({
             status: 'ok',
             diagnostic: {
                 encryption: {
                     status: encryptionOk ? 'passed' : 'failed',
                     key_source: isDefaultKey ? 'DEFAULT (Shared)' : 'CUSTOM (Private)',
+                    key_fingerprint: keyFingerprint,
                     test_match: encryptionOk,
                     encrypted_sample: encrypted.slice(0, 15) + '...'
                 },

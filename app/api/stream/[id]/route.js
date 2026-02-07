@@ -96,11 +96,10 @@ async function handleRequest(req, params, isHead = false) {
 
         let fileMeta = null;
         let successfulClient = null;
-        let lastError = null;
-        let attempts = 0;
+        const errors = [];
+        let lastError = null; // Keep track of the last error for a more specific message
 
         for (const client of clients) {
-            attempts++;
             try {
                 const metaRes = await client.instance.files.get({ fileId: key, fields: 'size, mimeType, name' });
                 fileMeta = metaRes.data;
@@ -108,15 +107,23 @@ async function handleRequest(req, params, isHead = false) {
                 diagHeaders['X-Einflix-Success-Slot'] = client.source;
                 break;
             } catch (e) {
-                lastError = e;
+                const status = e.status || e.response?.status;
+                const msg = e.message || 'Error';
+                errors.push(`${client.source}:${status || '?'}`);
+                lastError = e; // Update lastError with the current error
+                console.warn(`[Stream] Client ${client.source} failed for ${key}: ${msg}`);
             }
         }
 
         if (!fileMeta) {
-            const isQuotaTotal = (lastError?.status === 403 || lastError?.message?.includes('403') || lastError?.message?.includes('rate limit'));
+            const isQuotaTotal = errors.some(err => err.includes(':403') || err.includes(':429'));
             return new Response(`Drive error: ${lastError?.message || 'Not found'}`, {
                 status: isQuotaTotal ? 403 : 404,
-                headers: { ...diagHeaders, 'X-Einflix-Last-Error': lastError?.message?.slice(0, 50) }
+                headers: {
+                    ...diagHeaders,
+                    'X-Einflix-Rotate-Errors': errors.join(','),
+                    'X-Einflix-Error': isQuotaTotal ? 'AllQuotaExceeded' : 'NotFoundOnAnyAccount'
+                }
             });
         }
 

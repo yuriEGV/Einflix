@@ -83,7 +83,7 @@ async function handleRequest(req, params, isHead = false) {
 
         let imageBlob = null;
         let contentType = 'image/jpeg';
-        let lastErr = '';
+        const errors = [];
 
         for (const client of clients) {
             try {
@@ -98,19 +98,22 @@ async function handleRequest(req, params, isHead = false) {
                 diagHeaders['X-Einflix-Success-Slot'] = client.source;
                 break;
             } catch (e) {
+                const status = e.status || e.response?.status;
+                errors.push(`${client.source}:${status || '?'}`);
                 console.warn(`[Poster] Client ${client.source} failed for ${key}: ${e.message}`);
                 lastErr = e.message;
-                // Continue to next client
             }
         }
 
         if (!imageBlob) {
+            const isQuotaTotal = errors.some(err => err.includes(':403') || err.includes(':429'));
             return new Response(null, {
                 status: 302,
                 headers: {
                     ...diagHeaders,
                     Location: FALLBACK_IMAGE_URL,
-                    'X-Einflix-Last-Error': lastErr.slice(0, 50)
+                    'X-Einflix-Rotate-Errors': errors.join(','),
+                    'X-Einflix-Error': isQuotaTotal ? 'AllQuotaExceeded' : 'NotFoundOnAnyAccount'
                 }
             });
         }
